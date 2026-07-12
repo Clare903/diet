@@ -544,7 +544,7 @@
         <h3>记录上一餐</h3>
         <div class="mode-toggle">
           <button class="mode-btn active" data-mode="detailed">精确记录</button>
-          <button class="mode-btn" data-mode="quick">快速估算</button>
+          <button class="mode-btn" data-mode="quick">拍照识别</button>
         </div>
 
         <!-- Detailed mode -->
@@ -580,14 +580,33 @@
           </div>
         </div>
 
-        <!-- Quick mode -->
+        <!-- AI photo mode -->
         <div id="mode-quick" style="display:none;">
+          <div style="position:relative;margin-bottom:14px;">
+            <input type="file" id="meal-photo" accept="image/*" capture="environment"
+              style="display:none;">
+            <div id="photo-preview" style="display:none;margin-bottom:12px;border-radius:var(--radius-sm);overflow:hidden;position:relative;">
+              <img id="photo-img" style="width:100%;display:block;">
+              <button id="photo-remove" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+            </div>
+            <button id="btn-take-photo" style="width:100%;padding:32px 16px;border:2px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:inherit;color:var(--text-sub);font-size:14px;-webkit-tap-highlight-color:transparent;">
+              <span style="display:block;font-size:28px;margin-bottom:6px;">📷</span>
+              拍照或选择图片
+            </button>
+          </div>
           <div class="input-group">
-            <label>吃了什么（选填）</label>
-            <textarea id="meal-desc-quick" placeholder="简单描述，如：吃了碗面..." style="min-height:50px;"></textarea>
+            <label>补充描述（选填）</label>
+            <textarea id="meal-desc-quick" placeholder="例如：吃了七八分饱、比较油腻、主食吃得少..." style="min-height:50px;"></textarea>
+          </div>
+          <div id="ai-result" style="display:none;margin-bottom:14px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;margin-bottom:6px;">AI 分析结果</div>
+            <div id="ai-result-content" style="padding:14px;background:var(--bg);border-radius:var(--radius-sm);font-size:14px;line-height:1.6;"></div>
+          </div>
+          <div id="ai-loading" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">
+            分析中...
           </div>
           <div class="quick-option">
-            <label>碳水量</label>
+            <label>没有 AI？手动估算</label>
             <div class="quick-chips" id="carb-level">
               <button class="quick-chip" data-val="very-low">很少<span class="sub">纯肉菜</span></button>
               <button class="quick-chip" data-val="low">少量<span class="sub">小碗饭</span></button>
@@ -707,7 +726,7 @@
         <div style="font-size:15px;" id="eating-fast-summary">—</div>
       </div>
       <div class="btn-row" style="margin-top:16px;">
-        <button class="btn btn-primary" id="btn-start-next-fast">进食完毕，开始断食</button>
+        <button class="btn btn-primary" id="btn-start-next-fast">记录这餐，开始下轮断食</button>
       </div>
       <div class="btn-row">
         <button class="btn btn-ghost" id="btn-exit-eating">退出循环</button>
@@ -983,11 +1002,62 @@ function buildMealSummary() {
     const macro = calcMacroFromFoods(addedFoods);
     return { desc: names, macro, foods: addedFoods.map(f => ({...f})) };
   } else if (state.inputMode === 'quick') {
+    if (state._aiMacro) {
+      const desc = state._aiDesc || '拍照识别';
+      return { desc, macro: state._aiMacro, foods: [] };
+    }
     const desc = document.getElementById('meal-desc-quick').value.trim() || '快速记录';
     const macro = calcMacroFromQuick(state.quickCarb, state.quickPortion);
     return { desc, macro, foods: [] };
   }
   return null;
+}
+
+const AI_API_URL = localStorage.getItem('fasting-ai-api') || '';
+
+async function analyzePhoto() {
+  if (!AI_API_URL) {
+    document.getElementById('ai-result').style.display = '';
+    document.getElementById('ai-result-content').innerHTML =
+      '<span style="color:var(--text-muted);">未配置 AI 接口，请使用下方手动估算</span>' +
+      '<br><span style="font-size:12px;color:var(--text-muted);">开发者：在 localStorage 设置 fasting-ai-api 为你的接口地址</span>';
+    return;
+  }
+
+  const desc = document.getElementById('meal-desc-quick').value.trim();
+  const photoData = state._photoData;
+  if (!photoData) return;
+
+  document.getElementById('ai-loading').style.display = '';
+  document.getElementById('ai-result').style.display = 'none';
+
+  try {
+    const body = { image: photoData };
+    if (desc) body.description = desc;
+    const res = await fetch(AI_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.carb !== undefined) {
+      state._aiMacro = { carb: data.carb, protein: data.protein, fat: data.fat, cal: data.cal };
+      state._aiDesc = data.description || desc || '拍照识别';
+      document.getElementById('ai-result').style.display = '';
+      document.getElementById('ai-result-content').innerHTML =
+        `<strong>${state._aiDesc}</strong><br>` +
+        `${data.cal}千卡 · 碳水${data.carb}g · 蛋白质${data.protein}g · 脂肪${data.fat}g`;
+    } else {
+      document.getElementById('ai-result').style.display = '';
+      document.getElementById('ai-result-content').innerHTML =
+        '<span style="color:var(--red);">识别失败，请使用下方手动估算</span>';
+    }
+  } catch(e) {
+    document.getElementById('ai-result').style.display = '';
+    document.getElementById('ai-result-content').innerHTML =
+      '<span style="color:var(--red);">网络错误，请使用下方手动估算</span>';
+  }
+  document.getElementById('ai-loading').style.display = 'none';
 }
 
 // --- Notifications ---
@@ -1128,6 +1198,32 @@ function bindEvents() {
   document.getElementById('btn-confirm-end').addEventListener('click', endFast);
   document.getElementById('btn-start-next-fast').addEventListener('click', startNextFast);
   document.getElementById('btn-exit-eating').addEventListener('click', exitEating);
+
+  // Photo upload
+  document.getElementById('btn-take-photo').addEventListener('click', () => {
+    document.getElementById('meal-photo').click();
+  });
+  document.getElementById('meal-photo').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      state._photoData = ev.target.result;
+      document.getElementById('photo-img').src = ev.target.result;
+      document.getElementById('photo-preview').style.display = '';
+      document.getElementById('btn-take-photo').style.display = 'none';
+      analyzePhoto();
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('photo-remove').addEventListener('click', () => {
+    state._photoData = null;
+    state._aiMacro = null;
+    document.getElementById('photo-preview').style.display = 'none';
+    document.getElementById('btn-take-photo').style.display = '';
+    document.getElementById('ai-result').style.display = 'none';
+    document.getElementById('meal-photo').value = '';
+  });
 
   document.querySelectorAll('.feeling-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1513,19 +1609,11 @@ function updateEatingTimer() {
 function startNextFast() {
   state.eating = false;
   state.eatingStart = null;
-  state.fasting = true;
-  state.startTime = Date.now();
-  state.mealMacro = state._lastMealMacro || { carb: 100, cal: 650 };
-  state.mealDesc = '上轮延续';
-  state.mealFoods = [];
-  state.exercises = [];
-  state.notifiedStages = [];
   delete state._lastMealMacro;
   delete state._lastMealDesc;
-  requestNotifPermission();
   saveState();
   if (window._timerInterval) clearInterval(window._timerInterval);
-  showFasting();
+  showIdle();
 }
 
 function exitEating() {
