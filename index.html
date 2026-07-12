@@ -394,10 +394,75 @@
   .exercise-duration-row .unit { font-size: 13px; color: var(--text-muted); }
   .exercise-duration-row .btn { width: auto; padding: 6px 16px; font-size: 13px; }
 
+  /* Onboarding */
+  .onboarding {
+    position: fixed; inset: 0; background: var(--bg); z-index: 200;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 24px; text-align: center; overflow-y: auto;
+  }
+  .onboarding.hide { display: none; }
+  .ob-icon { font-size: 64px; margin-bottom: 16px; }
+  .ob-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .ob-sub { font-size: 15px; color: var(--text-sub); margin-bottom: 32px; max-width: 320px; line-height: 1.6; }
+  .ob-steps { text-align: left; max-width: 340px; width: 100%; margin-bottom: 32px; }
+  .ob-step {
+    display: flex; gap: 12px; align-items: flex-start; padding: 12px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .ob-step:last-child { border-bottom: none; }
+  .ob-num {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg);
+    color: var(--accent); font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ob-step-text { font-size: 14px; line-height: 1.5; }
+  .ob-step-text strong { font-weight: 600; }
+  .ob-step-text span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ob-features {
+    display: flex; gap: 16px; margin-bottom: 32px; max-width: 340px; width: 100;
+  }
+  .ob-feat {
+    flex: 1; text-align: center; padding: 14px 8px;
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+  }
+  .ob-feat-icon { font-size: 24px; margin-bottom: 4px; }
+  .ob-feat-label { font-size: 12px; color: var(--text-sub); font-weight: 500; }
+
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 </style>
+
+<div class="onboarding" id="onboarding">
+  <div class="ob-icon">🌙</div>
+  <div class="ob-title">断食追踪</div>
+  <div class="ob-sub">根据你上一餐吃的内容，智能计算断食各阶段的到达时间</div>
+  <div class="ob-steps">
+    <div class="ob-step">
+      <div class="ob-num">1</div>
+      <div class="ob-step-text"><strong>记录上一餐</strong><span>精确输入食物和克重，或快速估算碳水和份量</span></div>
+    </div>
+    <div class="ob-step">
+      <div class="ob-num">2</div>
+      <div class="ob-step-text"><strong>开始断食</strong><span>系统根据你的饮食自动计算消化→糖原耗尽→燃脂→酮症的时间线</span></div>
+    </div>
+    <div class="ob-step">
+      <div class="ob-num">3</div>
+      <div class="ob-step-text"><strong>运动打卡（可选）</strong><span>断食中运动会加速进程，不同阶段运动效果不同</span></div>
+    </div>
+    <div class="ob-step">
+      <div class="ob-num">4</div>
+      <div class="ob-step-text"><strong>结束并记录</strong><span>记录体重和感受，查看历史统计</span></div>
+    </div>
+  </div>
+  <div class="ob-features">
+    <div class="ob-feat"><div class="ob-feat-icon">🍚</div><div class="ob-feat-label">饮食影响</div></div>
+    <div class="ob-feat"><div class="ob-feat-icon">🏃</div><div class="ob-feat-label">运动加速</div></div>
+    <div class="ob-feat"><div class="ob-feat-icon">📊</div><div class="ob-feat-label">历史统计</div></div>
+  </div>
+  <button class="btn btn-primary" style="max-width:340px;" id="btn-start-onboarding">开始使用</button>
+</div>
 
 <div class="app">
   <header>
@@ -855,7 +920,18 @@ function buildMealSummary() {
 
 // --- UI ---
 
+function initOnboarding() {
+  const seen = localStorage.getItem('fasting-onboarding-done');
+  const ob = document.getElementById('onboarding');
+  if (seen) { ob.classList.add('hide'); return; }
+  document.getElementById('btn-start-onboarding').addEventListener('click', () => {
+    ob.classList.add('hide');
+    localStorage.setItem('fasting-onboarding-done', '1');
+  });
+}
+
 function init() {
+  initOnboarding();
   loadState();
   bindEvents();
   if (state.experience) {
