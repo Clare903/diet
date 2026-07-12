@@ -613,23 +613,25 @@
             <span style="font-size:13px;color:var(--text-muted);">kg</span>
           </div>
         </div>
-        <div class="exp-setting">
-          <label>经验</label>
-          <div class="exp-chips" id="exp-level">
-            <button class="exp-chip" data-val="beginner">新手</button>
-            <button class="exp-chip selected" data-val="intermediate">有经验</button>
-            <button class="exp-chip" data-val="experienced">老手</button>
-          </div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;margin-bottom:8px;">轻断食</div>
+        <div class="goal-chips" style="margin-bottom:12px;">
+          <button class="goal-chip" data-hours="16">16:8</button>
+          <button class="goal-chip selected" data-hours="18">18:6</button>
+          <button class="goal-chip" data-hours="20">20:4</button>
+          <button class="goal-chip" data-hours="23">23:1</button>
         </div>
-
-        <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;margin-bottom:8px;">目标时长</div>
-        <div class="goal-chips">
-          <button class="goal-chip" data-hours="16">16h</button>
-          <button class="goal-chip selected" data-hours="18">18h</button>
-          <button class="goal-chip" data-hours="20">20h</button>
-          <button class="goal-chip" data-hours="24">24h</button>
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;margin-bottom:8px;">长断食</div>
+        <div class="goal-chips" style="margin-bottom:12px;">
           <button class="goal-chip" data-hours="36">36h</button>
           <button class="goal-chip" data-hours="48">48h</button>
+          <button class="goal-chip" data-hours="72">72h</button>
+          <button class="goal-chip" data-hours="120">120h</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text-muted);">自定义</span>
+          <input type="number" id="custom-hours" placeholder="小时" min="1" max="240" step="1"
+            style="width:72px;padding:6px 8px;border:none;border-radius:8px;background:var(--bg);color:var(--text);font-size:15px;text-align:center;font-family:inherit;outline:none;">
+          <span style="font-size:13px;color:var(--text-muted);">小时</span>
         </div>
         <button class="btn btn-primary" id="btn-start">开始断食</button>
       </div>
@@ -690,6 +692,25 @@
       </div>
       <div class="btn-row">
         <button class="btn btn-danger" id="btn-end">结束断食</button>
+      </div>
+    </div>
+
+    <!-- Eating window (light fasting only) -->
+    <div id="state-eating" style="display:none;">
+      <div class="card" style="text-align:center;padding:32px 20px;">
+        <div style="font-size:15px;color:var(--text-muted);margin-bottom:4px;">进食窗口</div>
+        <div style="font-size:40px;font-weight:200;font-variant-numeric:tabular-nums;font-family:-apple-system,'SF Mono',ui-monospace,monospace;margin-bottom:4px;" id="eating-timer">00:00:00</div>
+        <div style="font-size:13px;color:var(--text-muted);" id="eating-window-label">剩余 6 小时</div>
+      </div>
+      <div class="card" style="padding:14px 16px;">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">上轮断食</div>
+        <div style="font-size:15px;" id="eating-fast-summary">—</div>
+      </div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn btn-primary" id="btn-start-next-fast">进食完毕，开始断食</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btn-exit-eating">退出循环</button>
       </div>
     </div>
   </div>
@@ -793,13 +814,17 @@ const CIRCUMFERENCE = 2 * Math.PI * 130;
 
 let state = {
   fasting: false, startTime: null,
+  eating: false, eatingStart: null,
   mealDesc: '', mealFoods: [], mealMacro: null,
-  goalHours: 18, experience: 'intermediate', bodyWeight: null,
+  goalHours: 18, bodyWeight: null,
   quickCarb: 'medium', quickPortion: 'normal',
   inputMode: 'detailed',
   exercises: [],
   history: []
 };
+
+function isLightFast(hours) { return (hours || state.goalHours) <= 24; }
+function eatingWindowHours() { return 24 - state.goalHours; }
 
 let addedFoods = [];
 
@@ -869,10 +894,11 @@ function calcExerciseGlycogenBurn(exercises) {
   return { totalGlycogenKcal, totalCalBurned };
 }
 
-function calcStages(macro, experience, exercises) {
+function calcStages(macro, exercises, goalHours) {
   const carb = macro.carb;
   const cal = macro.cal;
   const startTime = state.startTime;
+  const goal = goalHours || state.goalHours;
 
   let carbFactor = 1;
   if (carb < 20) carbFactor = 0.6;
@@ -887,18 +913,14 @@ function calcStages(macro, experience, exercises) {
   else if (cal > 900) portionShift = 1.5;
   else if (cal > 700) portionShift = 0.5;
 
-  let expFactor = 1;
-  if (experience === 'beginner') expFactor = 1.15;
-  else if (experience === 'experienced') expFactor = 0.85;
-
   const baseHours = [
     0,
     Math.max(2, 3 + portionShift * 0.5),
     7 * carbFactor + portionShift * 0.5,
     12 * carbFactor + portionShift,
-    16 * carbFactor * expFactor + portionShift,
-    20 * carbFactor * expFactor + portionShift * 0.5,
-    30 * carbFactor * expFactor
+    16 * carbFactor + portionShift,
+    20 * carbFactor + portionShift * 0.5,
+    30 * carbFactor
   ];
 
   const stageSensitivity = [0.15, 0.3, 0.9, 1.0, 0.6, 0.3, 0.15];
@@ -928,7 +950,7 @@ function calcStages(macro, experience, exercises) {
 
   const minHours = [0, 1.5, 3, 5, 7, 10, 16];
 
-  const stages = [
+  const allStages = [
     { name: '消化吸收', desc: '身体正在消化食物，血糖上升中', color: 'var(--stage-digest)' },
     { name: '血糖稳定', desc: '消化趋于完成，血糖回归正常', color: 'var(--stage-digest)' },
     { name: '糖原消耗', desc: '胰岛素降低，开始消耗肝糖原储备', color: 'var(--stage-postabs)' },
@@ -938,16 +960,19 @@ function calcStages(macro, experience, exercises) {
     { name: '深度酮症', desc: '自噬激活，细胞进入深层修复模式', color: 'var(--stage-autophagy)' },
   ];
 
-  for (let i = 0; i < stages.length; i++) {
+  for (let i = 0; i < allStages.length; i++) {
     const maxReduction = baseHours[i] * 0.45;
     const boosted = baseHours[i] - Math.min(stageBoosts[i], maxReduction);
-    stages[i].hour = round1(Math.max(minHours[i], boosted));
+    allStages[i].hour = round1(Math.max(minHours[i], boosted));
   }
 
-  for (let i = 1; i < stages.length; i++) {
-    if (stages[i].hour <= stages[i-1].hour) stages[i].hour = round1(stages[i-1].hour + 0.5);
+  for (let i = 1; i < allStages.length; i++) {
+    if (allStages[i].hour <= allStages[i-1].hour) allStages[i].hour = round1(allStages[i-1].hour + 0.5);
   }
-  return stages;
+
+  // Only show stages reachable within the goal + a small buffer
+  const maxShow = goal * 1.15;
+  return allStages.filter(s => s.hour < maxShow);
 }
 
 function round1(n) { return Math.round(n * 10) / 10; }
@@ -998,7 +1023,7 @@ function sendNotification(title, body) {
 function checkStageNotifications() {
   if (!state.fasting || !state.startTime) return;
   const elapsedH = (Date.now() - state.startTime) / 3600000;
-  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.experience, state.exercises);
+  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.exercises);
 
   if (!state.notifiedStages) state.notifiedStages = [];
 
@@ -1033,15 +1058,16 @@ function init() {
   initOnboarding();
   loadState();
   bindEvents();
-  if (state.experience) {
-    document.querySelectorAll('#exp-level .exp-chip').forEach(c => {
-      c.classList.toggle('selected', c.dataset.val === state.experience);
-    });
-  }
   if (state.bodyWeight) {
     document.getElementById('user-weight').value = state.bodyWeight;
   }
-  if (state.fasting) showFasting(); else showIdle();
+  // Restore goal chip selection
+  document.querySelectorAll('.goal-chip').forEach(c => {
+    c.classList.toggle('selected', parseInt(c.dataset.hours) === state.goalHours);
+  });
+  if (state.eating) showEating();
+  else if (state.fasting) showFasting();
+  else showIdle();
   renderHistory();
 }
 
@@ -1079,20 +1105,29 @@ function bindEvents() {
     const w = parseFloat(e.target.value);
     if (w && w > 20) { state.bodyWeight = w; saveState(); }
   });
-  setupChipGroup('exp-level', v => { state.experience = v; saveState(); });
 
   document.querySelectorAll('.goal-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       document.querySelectorAll('.goal-chip').forEach(c => c.classList.remove('selected'));
       chip.classList.add('selected');
       state.goalHours = parseInt(chip.dataset.hours);
+      document.getElementById('custom-hours').value = '';
     });
+  });
+  document.getElementById('custom-hours').addEventListener('input', e => {
+    const v = parseInt(e.target.value);
+    if (v && v > 0) {
+      document.querySelectorAll('.goal-chip').forEach(c => c.classList.remove('selected'));
+      state.goalHours = v;
+    }
   });
 
   document.getElementById('btn-start').addEventListener('click', startFast);
   document.getElementById('btn-end').addEventListener('click', () => document.getElementById('end-modal').classList.add('show'));
   document.getElementById('btn-cancel-end').addEventListener('click', () => document.getElementById('end-modal').classList.remove('show'));
   document.getElementById('btn-confirm-end').addEventListener('click', endFast);
+  document.getElementById('btn-start-next-fast').addEventListener('click', startNextFast);
+  document.getElementById('btn-exit-eating').addEventListener('click', exitEating);
 
   document.querySelectorAll('.feeling-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1227,6 +1262,8 @@ function startFast() {
     return;
   }
   state.fasting = true;
+  state.eating = false;
+  state.eatingStart = null;
   state.startTime = Date.now();
   state.mealDesc = meal.desc;
   state.mealFoods = meal.foods;
@@ -1238,9 +1275,15 @@ function startFast() {
   showFasting();
 }
 
-function showIdle() {
-  document.getElementById('state-idle').style.display = '';
+function hideAllStates() {
+  document.getElementById('state-idle').style.display = 'none';
   document.getElementById('state-fasting').style.display = 'none';
+  document.getElementById('state-eating').style.display = 'none';
+}
+
+function showIdle() {
+  hideAllStates();
+  document.getElementById('state-idle').style.display = '';
   addedFoods = [];
   renderAddedFoods();
 }
@@ -1259,11 +1302,11 @@ function renderExerciseLog() {
   const stageEffectLabel = ['加速消化', '加速血糖消耗', '大量消耗糖原', '加速燃脂切换', '加深燃脂', '维持酮症', '加深自噬'];
 
   const macro = state.mealMacro || { carb: 100, cal: 650 };
-  const noExStages = calcStages(macro, state.experience, []);
-  const withExStages = calcStages(macro, state.experience, exercises);
+  const noExStages = calcStages(macro, [], 120);
+  const withExStages = calcStages(macro, exercises, 120);
 
-  const fatBurnIdx = 4;
-  const totalSaved = Math.max(0, noExStages[fatBurnIdx].hour - withExStages[fatBurnIdx].hour);
+  const fatBurnIdx = noExStages.findIndex(s => s.name === '脂肪燃烧');
+  const totalSaved = fatBurnIdx >= 0 ? Math.max(0, noExStages[fatBurnIdx].hour - (withExStages[fatBurnIdx]?.hour || 0)) : 0;
   const { totalGlycogenKcal, totalCalBurned } = calcExerciseGlycogenBurn(exercises);
   const glycogenPct = Math.min(100, Math.round(totalGlycogenKcal / GLYCOGEN_STORE_KCAL * 100));
 
@@ -1309,7 +1352,7 @@ function removeExercise(idx) {
 }
 
 function showFasting() {
-  document.getElementById('state-idle').style.display = 'none';
+  hideAllStates();
   document.getElementById('state-fasting').style.display = '';
   document.getElementById('fasting-meal-info').textContent = state.mealDesc;
   const m = state.mealMacro;
@@ -1317,7 +1360,8 @@ function showFasting() {
     document.getElementById('fasting-macro-info').textContent =
       `${m.cal}千卡 · 碳水${m.carb}g · 蛋白质${m.protein}g · 脂肪${m.fat}g`;
   }
-  document.getElementById('timer-goal-label').textContent = '目标 ' + state.goalHours + ' 小时';
+  const goalLabel = isLightFast() ? state.goalHours + ':' + (24 - state.goalHours) + ' 轻断食' : '目标 ' + state.goalHours + ' 小时';
+  document.getElementById('timer-goal-label').textContent = goalLabel;
   renderExerciseLog();
   updateTimer();
   if (window._timerInterval) clearInterval(window._timerInterval);
@@ -1339,7 +1383,7 @@ function updateTimer() {
   ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 
   const elapsedH = elapsed / 3600000;
-  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.experience, state.exercises);
+  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.exercises);
   let currentStage = stages[0];
   for (let i = stages.length - 1; i >= 0; i--) {
     if (elapsedH >= stages[i].hour) { currentStage = stages[i]; break; }
@@ -1395,8 +1439,13 @@ function endFast() {
   const note = document.getElementById('end-note').value;
   const elapsed = Date.now() - state.startTime;
   const elapsedH = elapsed / 3600000;
-  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.experience, state.exercises);
+  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.exercises);
   const reachedStages = stages.filter(s => elapsedH >= s.hour).map(s => s.name);
+
+  const wasLightFast = isLightFast();
+  const prevGoal = state.goalHours;
+  const prevMacro = state.mealMacro;
+  const prevDesc = state.mealDesc;
 
   state.history.unshift({
     date: state.startTime, endDate: Date.now(), duration: elapsed,
@@ -1410,15 +1459,83 @@ function endFast() {
   state.fasting = false; state.startTime = null;
   state.mealMacro = null; state.mealFoods = [];
   state.exercises = [];
-  saveState();
 
   document.getElementById('end-modal').classList.remove('show');
   document.querySelectorAll('.feeling-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('end-weight').value = '';
   document.getElementById('end-note').value = '';
   if (window._timerInterval) clearInterval(window._timerInterval);
-  showIdle();
+
+  if (wasLightFast) {
+    state.eating = true;
+    state.eatingStart = Date.now();
+    state.goalHours = prevGoal;
+    state._lastMealMacro = prevMacro;
+    state._lastMealDesc = prevDesc;
+    saveState();
+    showEating();
+  } else {
+    state.eating = false;
+    saveState();
+    showIdle();
+  }
   renderHistory();
+}
+
+function showEating() {
+  hideAllStates();
+  document.getElementById('state-eating').style.display = '';
+  const winH = eatingWindowHours();
+  document.getElementById('eating-window-label').textContent = '进食窗口 ' + winH + ' 小时';
+  const dH = state._lastMealDesc || '';
+  document.getElementById('eating-fast-summary').textContent =
+    state.goalHours + ':' + (24 - state.goalHours) + ' 断食完成' + (dH ? ' · ' + dH : '');
+  if (window._timerInterval) clearInterval(window._timerInterval);
+  window._timerInterval = setInterval(updateEatingTimer, 1000);
+  updateEatingTimer();
+}
+
+function updateEatingTimer() {
+  if (!state.eating || !state.eatingStart) return;
+  const elapsed = Date.now() - state.eatingStart;
+  const winMs = eatingWindowHours() * 3600000;
+  const remaining = Math.max(0, winMs - elapsed);
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  document.getElementById('eating-timer').textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+  if (remaining <= 0) {
+    document.getElementById('eating-window-label').textContent = '进食窗口已结束';
+    sendNotification('进食窗口结束', '可以开始下一轮断食了');
+  }
+}
+
+function startNextFast() {
+  state.eating = false;
+  state.eatingStart = null;
+  state.fasting = true;
+  state.startTime = Date.now();
+  state.mealMacro = state._lastMealMacro || { carb: 100, cal: 650 };
+  state.mealDesc = '上轮延续';
+  state.mealFoods = [];
+  state.exercises = [];
+  state.notifiedStages = [];
+  delete state._lastMealMacro;
+  delete state._lastMealDesc;
+  requestNotifPermission();
+  saveState();
+  if (window._timerInterval) clearInterval(window._timerInterval);
+  showFasting();
+}
+
+function exitEating() {
+  state.eating = false;
+  state.eatingStart = null;
+  delete state._lastMealMacro;
+  delete state._lastMealDesc;
+  saveState();
+  if (window._timerInterval) clearInterval(window._timerInterval);
+  showIdle();
 }
 
 function renderHistory() {
