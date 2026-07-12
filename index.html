@@ -1,81 +1,86 @@
 <title>断食追踪</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#F2F2F7">
+<meta name="theme-color" content="#E8ECED">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root {
-    --bg: #F2F2F7;
-    --bg-card: #FFFFFF;
-    --bg-card-alt: #F9F9FB;
-    --bg-input: #E5E5EA;
-    --text: #000000;
-    --text-sub: #3C3C43;
-    --text-muted: #8E8E93;
-    --accent: #34C759;
-    --accent-light: #30D158;
-    --accent-bg: rgba(52,199,89,0.12);
-    --blue: #007AFF;
-    --orange: #FF9500;
-    --red: #FF3B30;
-    --red-bg: rgba(255,59,48,0.12);
-    --purple: #AF52DE;
-    --border: #C6C6C8;
-    --separator: rgba(60,60,67,0.12);
-    --shadow: rgba(0,0,0,0.04);
-    --shadow-md: rgba(0,0,0,0.08);
-    --stage-digest: #8E8E93;
-    --stage-postabs: #34C759;
-    --stage-glycogen: #FF9500;
-    --stage-fatburn: #FF6B35;
-    --stage-ketosis: #FF3B30;
-    --stage-autophagy: #AF52DE;
+    --bg: #E8ECED;
+    --bg-card: #F4F5F6;
+    --bg-card-alt: #EDF0F1;
+    --bg-input: #DDE2E4;
+    --text: #3D4A4F;
+    --text-sub: #5B6B72;
+    --text-muted: #8A9AA0;
+    --accent: #5B778E;
+    --accent-light: #7A9BB0;
+    --accent-bg: rgba(91,119,142,0.12);
+    --blue: #6B8FA8;
+    --orange: #B89A7A;
+    --red: #B07A7A;
+    --red-bg: rgba(176,122,122,0.12);
+    --purple: #8A7A9E;
+    --border: #C8D0D4;
+    --separator: rgba(91,119,142,0.12);
+    --shadow: rgba(59,72,80,0.05);
+    --shadow-md: rgba(59,72,80,0.08);
+    --stage-digest: #8A9AA0;
+    --stage-postabs: #7A9BB0;
+    --stage-glycogen: #B89A7A;
+    --stage-fatburn: #B08A6A;
+    --stage-ketosis: #B07A7A;
+    --stage-autophagy: #8A7A9E;
+    --mint: #9DBCB4;
+    --mint-bg: rgba(177,217,212,0.18);
     --radius: 16px;
     --radius-sm: 10px;
     --safe-top: env(safe-area-inset-top, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #000000; --bg-card: #1C1C1E; --bg-card-alt: #2C2C2E;
-      --bg-input: #2C2C2E;
-      --text: #FFFFFF; --text-sub: #EBEBF5; --text-muted: #8E8E93;
-      --accent: #30D158; --accent-light: #34C759; --accent-bg: rgba(48,209,88,0.15);
-      --red-bg: rgba(255,69,58,0.15); --red: #FF453A;
-      --blue: #0A84FF; --orange: #FF9F0A; --purple: #BF5AF2;
-      --border: #38383A; --separator: rgba(84,84,88,0.36);
+      --bg: #1E2628; --bg-card: #283032; --bg-card-alt: #2E383C;
+      --bg-input: #2E383C;
+      --text: #D4DCDF; --text-sub: #ADBCC2; --text-muted: #7A8E96;
+      --accent: #8AAFC6; --accent-light: #9DBFD4; --accent-bg: rgba(138,175,198,0.15);
+      --red-bg: rgba(190,140,140,0.15); --red: #BE8C8C;
+      --blue: #8AAFC6; --orange: #C8AA8A; --purple: #A090B4;
+      --border: #384448; --separator: rgba(138,175,198,0.15);
       --shadow: rgba(0,0,0,0.2); --shadow-md: rgba(0,0,0,0.3);
-      --stage-digest: #8E8E93; --stage-postabs: #30D158;
-      --stage-glycogen: #FF9F0A; --stage-fatburn: #FF6B35;
-      --stage-ketosis: #FF453A; --stage-autophagy: #BF5AF2;
+      --stage-digest: #7A8E96; --stage-postabs: #8AAFC6;
+      --stage-glycogen: #C8AA8A; --stage-fatburn: #C09A7A;
+      --stage-ketosis: #BE8C8C; --stage-autophagy: #A090B4;
+      --mint: #8AADA4; --mint-bg: rgba(138,173,164,0.15);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #000000; --bg-card: #1C1C1E; --bg-card-alt: #2C2C2E;
-    --bg-input: #2C2C2E;
-    --text: #FFFFFF; --text-sub: #EBEBF5; --text-muted: #8E8E93;
-    --accent: #30D158; --accent-light: #34C759; --accent-bg: rgba(48,209,88,0.15);
-    --red-bg: rgba(255,69,58,0.15); --red: #FF453A;
-    --blue: #0A84FF; --orange: #FF9F0A; --purple: #BF5AF2;
-    --border: #38383A; --separator: rgba(84,84,88,0.36);
+    --bg: #1E2628; --bg-card: #283032; --bg-card-alt: #2E383C;
+    --bg-input: #2E383C;
+    --text: #D4DCDF; --text-sub: #ADBCC2; --text-muted: #7A8E96;
+    --accent: #8AAFC6; --accent-light: #9DBFD4; --accent-bg: rgba(138,175,198,0.15);
+    --red-bg: rgba(190,140,140,0.15); --red: #BE8C8C;
+    --blue: #8AAFC6; --orange: #C8AA8A; --purple: #A090B4;
+    --border: #384448; --separator: rgba(138,175,198,0.15);
     --shadow: rgba(0,0,0,0.2); --shadow-md: rgba(0,0,0,0.3);
-    --stage-digest: #8E8E93; --stage-postabs: #30D158;
-    --stage-glycogen: #FF9F0A; --stage-fatburn: #FF6B35;
-    --stage-ketosis: #FF453A; --stage-autophagy: #BF5AF2;
+    --stage-digest: #7A8E96; --stage-postabs: #8AAFC6;
+    --stage-glycogen: #C8AA8A; --stage-fatburn: #C09A7A;
+    --stage-ketosis: #BE8C8C; --stage-autophagy: #A090B4;
+    --mint: #8AADA4; --mint-bg: rgba(138,173,164,0.15);
   }
   :root[data-theme="light"] {
-    --bg: #F2F2F7; --bg-card: #FFFFFF; --bg-card-alt: #F9F9FB;
-    --bg-input: #E5E5EA;
-    --text: #000000; --text-sub: #3C3C43; --text-muted: #8E8E93;
-    --accent: #34C759; --accent-light: #30D158; --accent-bg: rgba(52,199,89,0.12);
-    --red-bg: rgba(255,59,48,0.12); --red: #FF3B30;
-    --blue: #007AFF; --orange: #FF9500; --purple: #AF52DE;
-    --border: #C6C6C8; --separator: rgba(60,60,67,0.12);
-    --shadow: rgba(0,0,0,0.04); --shadow-md: rgba(0,0,0,0.08);
-    --stage-digest: #8E8E93; --stage-postabs: #34C759;
-    --stage-glycogen: #FF9500; --stage-fatburn: #FF6B35;
-    --stage-ketosis: #FF3B30; --stage-autophagy: #AF52DE;
+    --bg: #E8ECED; --bg-card: #F4F5F6; --bg-card-alt: #EDF0F1;
+    --bg-input: #DDE2E4;
+    --text: #3D4A4F; --text-sub: #5B6B72; --text-muted: #8A9AA0;
+    --accent: #5B778E; --accent-light: #7A9BB0; --accent-bg: rgba(91,119,142,0.12);
+    --red-bg: rgba(176,122,122,0.12); --red: #B07A7A;
+    --blue: #6B8FA8; --orange: #B89A7A; --purple: #8A7A9E;
+    --border: #C8D0D4; --separator: rgba(91,119,142,0.12);
+    --shadow: rgba(59,72,80,0.05); --shadow-md: rgba(59,72,80,0.08);
+    --stage-digest: #8A9AA0; --stage-postabs: #7A9BB0;
+    --stage-glycogen: #B89A7A; --stage-fatburn: #B08A6A;
+    --stage-ketosis: #B07A7A; --stage-autophagy: #8A7A9E;
+    --mint: #9DBCB4; --mint-bg: rgba(177,217,212,0.18);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -312,8 +317,8 @@
   }
   .macro-bar span { height: 100%; transition: width 0.3s; }
   .macro-bar .carb-bar { background: var(--orange); }
-  .macro-bar .protein-bar { background: var(--accent); }
-  .macro-bar .fat-bar { background: #FFD60A; }
+  .macro-bar .protein-bar { background: var(--mint); }
+  .macro-bar .fat-bar { background: var(--accent-light); }
 
   /* Quick mode chips */
   .quick-option { margin-bottom: 16px; }
@@ -423,7 +428,7 @@
   .exercise-card h3 { display: flex; align-items: center; justify-content: space-between; }
   .exercise-card h3 .boost {
     font-size: 12px; font-weight: 600; color: var(--orange);
-    background: rgba(255,149,0,0.12); padding: 4px 10px; border-radius: 12px;
+    background: rgba(184,154,122,0.15); padding: 4px 10px; border-radius: 12px;
   }
   .exercise-log { margin-bottom: 12px; }
   .exercise-entry {
@@ -472,14 +477,13 @@
     padding: 40px 24px; text-align: center; overflow-y: auto;
   }
   .onboarding.hide { display: none; }
-  .ob-icon { font-size: 72px; margin-bottom: 20px; }
-  .ob-title { font-size: 34px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .ob-title { font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; color: var(--accent); }
   .ob-sub {
-    font-size: 17px; color: var(--text-sub); margin-bottom: 40px;
-    max-width: 320px; line-height: 1.6; opacity: 0.8;
+    font-size: 15px; color: var(--text-muted); margin-bottom: 48px;
+    max-width: 300px; line-height: 1.6;
   }
   .ob-steps {
-    text-align: left; max-width: 340px; width: 100%; margin-bottom: 40px;
+    text-align: left; max-width: 340px; width: 100%; margin-bottom: 48px;
     background: var(--bg-card); border-radius: var(--radius); padding: 4px 0;
   }
   .ob-step {
@@ -487,22 +491,13 @@
   }
   .ob-step:not(:last-child) { border-bottom: 0.5px solid var(--separator); }
   .ob-num {
-    width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
-    color: #fff; font-size: 14px; font-weight: 700;
+    width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-size: 13px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .ob-step-text { font-size: 15px; line-height: 1.5; }
+  .ob-step-text { font-size: 14px; line-height: 1.5; }
   .ob-step-text strong { font-weight: 600; }
-  .ob-step-text span { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
-  .ob-features {
-    display: flex; gap: 12px; margin-bottom: 40px; max-width: 340px; width: 100%;
-  }
-  .ob-feat {
-    flex: 1; text-align: center; padding: 16px 8px;
-    background: var(--bg-card); border-radius: var(--radius);
-  }
-  .ob-feat-icon { font-size: 28px; margin-bottom: 6px; }
-  .ob-feat-label { font-size: 12px; color: var(--text-sub); font-weight: 600; }
+  .ob-step-text span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -510,9 +505,8 @@
 </style>
 
 <div class="onboarding" id="onboarding">
-  <div class="ob-icon">🌙</div>
   <div class="ob-title">断食追踪</div>
-  <div class="ob-sub">根据你上一餐吃的内容，智能计算断食各阶段的到达时间</div>
+  <div class="ob-sub">记录饮食，智能计算断食各阶段进程</div>
   <div class="ob-steps">
     <div class="ob-step">
       <div class="ob-num">1</div>
@@ -530,11 +524,6 @@
       <div class="ob-num">4</div>
       <div class="ob-step-text"><strong>结束记录</strong><span>记录体重和感受，查看统计</span></div>
     </div>
-  </div>
-  <div class="ob-features">
-    <div class="ob-feat"><div class="ob-feat-icon">🍚</div><div class="ob-feat-label">饮食影响</div></div>
-    <div class="ob-feat"><div class="ob-feat-icon">🏃</div><div class="ob-feat-label">运动加速</div></div>
-    <div class="ob-feat"><div class="ob-feat-icon">📊</div><div class="ob-feat-label">历史统计</div></div>
   </div>
   <button class="btn btn-primary" style="max-width:340px;" id="btn-start-onboarding">开始使用</button>
 </div>
@@ -572,15 +561,15 @@
               <div class="macro-label">千卡</div>
             </div>
             <div class="macro-item">
-              <div class="macro-val" style="color:var(--orange)" id="total-carb">0g</div>
+              <div class="macro-val" style="color:var(--orange);" id="total-carb">0g</div>
               <div class="macro-label">碳水</div>
             </div>
             <div class="macro-item">
-              <div class="macro-val" style="color:var(--accent)" id="total-protein">0g</div>
+              <div class="macro-val" style="color:var(--mint)" id="total-protein">0g</div>
               <div class="macro-label">蛋白质</div>
             </div>
             <div class="macro-item">
-              <div class="macro-val" style="color:#FFD60A" id="total-fat">0g</div>
+              <div class="macro-val" style="color:var(--accent-light)" id="total-fat">0g</div>
               <div class="macro-label">脂肪</div>
             </div>
           </div>
