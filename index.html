@@ -920,6 +920,61 @@ function buildMealSummary() {
 
 // --- UI ---
 
+// --- Notifications ---
+const STAGE_NOTIF_MESSAGES = {
+  '血糖稳定': { title: '血糖已稳定', body: '消化趋于完成，身体开始进入断食状态' },
+  '糖原消耗': { title: '开始消耗糖原', body: '胰岛素降低，肝糖原储备正在被消耗' },
+  '糖原耗尽': { title: '糖原基本耗尽', body: '身体正在寻找替代能源，即将进入燃脂' },
+  '脂肪燃烧': { title: '进入燃脂阶段 🔥', body: '脂肪酸氧化加速，你正在燃烧脂肪！' },
+  '初步酮症': { title: '进入酮症状态', body: '酮体水平上升，大脑开始使用酮体供能' },
+  '深度酮症': { title: '深度酮症 · 自噬激活', body: '细胞进入深层修复模式，继续保持！' },
+};
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotification(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png' });
+  } catch(e) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification(title, { body, icon: 'icon-192.png' });
+      });
+    }
+  }
+}
+
+function checkStageNotifications() {
+  if (!state.fasting || !state.startTime) return;
+  const elapsedH = (Date.now() - state.startTime) / 3600000;
+  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.experience, state.exercises);
+
+  if (!state.notifiedStages) state.notifiedStages = [];
+
+  stages.forEach(s => {
+    if (s.name === '消化吸收') return;
+    if (elapsedH >= s.hour && !state.notifiedStages.includes(s.name)) {
+      const msg = STAGE_NOTIF_MESSAGES[s.name];
+      if (msg) sendNotification(msg.title, msg.body);
+      state.notifiedStages.push(s.name);
+      saveState();
+    }
+  });
+
+  // Goal reached notification
+  if (elapsedH >= state.goalHours && !state.notifiedStages.includes('_goal')) {
+    sendNotification('断食目标达成！', `你已完成 ${state.goalHours} 小时断食，太棒了！`);
+    state.notifiedStages.push('_goal');
+    saveState();
+  }
+}
+
 function initOnboarding() {
   const seen = localStorage.getItem('fasting-onboarding-done');
   const ob = document.getElementById('onboarding');
@@ -1135,6 +1190,8 @@ function startFast() {
   state.mealFoods = meal.foods;
   state.mealMacro = meal.macro;
   state.exercises = [];
+  state.notifiedStages = [];
+  requestNotifPermission();
   saveState();
   showFasting();
 }
@@ -1254,6 +1311,7 @@ function updateTimer() {
   ring.style.stroke = progress >= 1 ? 'var(--warm)' : 'var(--accent)';
 
   renderStages(stages, elapsedH);
+  checkStageNotifications();
 }
 
 function renderStages(stages, elapsed) {
