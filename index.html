@@ -1,433 +1,508 @@
 <title>断食追踪</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#4A7C5E">
+<meta name="theme-color" content="#F2F2F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root {
-    --bg: #F0EDE7;
-    --bg-card: #FAFAF7;
-    --bg-card-alt: #F5F2EC;
-    --text: #2E2E2C;
-    --text-sub: #6B6B65;
-    --text-muted: #9C9C94;
-    --accent: #4A7C5E;
-    --accent-light: #6B9E7E;
-    --accent-bg: #E8F0EB;
-    --warm: #C08B5C;
-    --warm-bg: #F5EDE4;
-    --warm-light: #D4A87A;
-    --danger: #B85C4A;
-    --danger-bg: #F5E4E0;
-    --border: #DDD9D0;
-    --border-light: #EAE7E0;
-    --shadow: rgba(46,46,44,0.06);
-    --shadow-md: rgba(46,46,44,0.1);
-    --stage-digest: #8BA888;
-    --stage-postabs: #6B9E7E;
-    --stage-glycogen: #C8956C;
-    --stage-fatburn: #D4864A;
-    --stage-ketosis: #B85C4A;
-    --stage-autophagy: #8B4A6B;
-    --radius: 12px;
-    --radius-sm: 8px;
+    --bg: #F2F2F7;
+    --bg-card: #FFFFFF;
+    --bg-card-alt: #F9F9FB;
+    --bg-input: #E5E5EA;
+    --text: #000000;
+    --text-sub: #3C3C43;
+    --text-muted: #8E8E93;
+    --accent: #34C759;
+    --accent-light: #30D158;
+    --accent-bg: rgba(52,199,89,0.12);
+    --blue: #007AFF;
+    --orange: #FF9500;
+    --red: #FF3B30;
+    --red-bg: rgba(255,59,48,0.12);
+    --purple: #AF52DE;
+    --border: #C6C6C8;
+    --separator: rgba(60,60,67,0.12);
+    --shadow: rgba(0,0,0,0.04);
+    --shadow-md: rgba(0,0,0,0.08);
+    --stage-digest: #8E8E93;
+    --stage-postabs: #34C759;
+    --stage-glycogen: #FF9500;
+    --stage-fatburn: #FF6B35;
+    --stage-ketosis: #FF3B30;
+    --stage-autophagy: #AF52DE;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --safe-top: env(safe-area-inset-top, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #181C1A; --bg-card: #222826; --bg-card-alt: #2A302D;
-      --text: #E0DDD6; --text-sub: #A0A098; --text-muted: #6E6E66;
-      --accent: #6B9E7E; --accent-light: #8BBB9E; --accent-bg: #1E2E24;
-      --warm: #D4A87A; --warm-bg: #2E2518; --warm-light: #E0BF9A;
-      --danger: #D47A66; --danger-bg: #2E1E18;
-      --border: #333A36; --border-light: #2A302D;
+      --bg: #000000; --bg-card: #1C1C1E; --bg-card-alt: #2C2C2E;
+      --bg-input: #2C2C2E;
+      --text: #FFFFFF; --text-sub: #EBEBF5; --text-muted: #8E8E93;
+      --accent: #30D158; --accent-light: #34C759; --accent-bg: rgba(48,209,88,0.15);
+      --red-bg: rgba(255,69,58,0.15); --red: #FF453A;
+      --blue: #0A84FF; --orange: #FF9F0A; --purple: #BF5AF2;
+      --border: #38383A; --separator: rgba(84,84,88,0.36);
       --shadow: rgba(0,0,0,0.2); --shadow-md: rgba(0,0,0,0.3);
+      --stage-digest: #8E8E93; --stage-postabs: #30D158;
+      --stage-glycogen: #FF9F0A; --stage-fatburn: #FF6B35;
+      --stage-ketosis: #FF453A; --stage-autophagy: #BF5AF2;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #181C1A; --bg-card: #222826; --bg-card-alt: #2A302D;
-    --text: #E0DDD6; --text-sub: #A0A098; --text-muted: #6E6E66;
-    --accent: #6B9E7E; --accent-light: #8BBB9E; --accent-bg: #1E2E24;
-    --warm: #D4A87A; --warm-bg: #2E2518; --warm-light: #E0BF9A;
-    --danger: #D47A66; --danger-bg: #2E1E18;
-    --border: #333A36; --border-light: #2A302D;
+    --bg: #000000; --bg-card: #1C1C1E; --bg-card-alt: #2C2C2E;
+    --bg-input: #2C2C2E;
+    --text: #FFFFFF; --text-sub: #EBEBF5; --text-muted: #8E8E93;
+    --accent: #30D158; --accent-light: #34C759; --accent-bg: rgba(48,209,88,0.15);
+    --red-bg: rgba(255,69,58,0.15); --red: #FF453A;
+    --blue: #0A84FF; --orange: #FF9F0A; --purple: #BF5AF2;
+    --border: #38383A; --separator: rgba(84,84,88,0.36);
     --shadow: rgba(0,0,0,0.2); --shadow-md: rgba(0,0,0,0.3);
+    --stage-digest: #8E8E93; --stage-postabs: #30D158;
+    --stage-glycogen: #FF9F0A; --stage-fatburn: #FF6B35;
+    --stage-ketosis: #FF453A; --stage-autophagy: #BF5AF2;
   }
   :root[data-theme="light"] {
-    --bg: #F0EDE7; --bg-card: #FAFAF7; --bg-card-alt: #F5F2EC;
-    --text: #2E2E2C; --text-sub: #6B6B65; --text-muted: #9C9C94;
-    --accent: #4A7C5E; --accent-light: #6B9E7E; --accent-bg: #E8F0EB;
-    --warm: #C08B5C; --warm-bg: #F5EDE4; --warm-light: #D4A87A;
-    --danger: #B85C4A; --danger-bg: #F5E4E0;
-    --border: #DDD9D0; --border-light: #EAE7E0;
-    --shadow: rgba(46,46,44,0.06); --shadow-md: rgba(46,46,44,0.1);
+    --bg: #F2F2F7; --bg-card: #FFFFFF; --bg-card-alt: #F9F9FB;
+    --bg-input: #E5E5EA;
+    --text: #000000; --text-sub: #3C3C43; --text-muted: #8E8E93;
+    --accent: #34C759; --accent-light: #30D158; --accent-bg: rgba(52,199,89,0.12);
+    --red-bg: rgba(255,59,48,0.12); --red: #FF3B30;
+    --blue: #007AFF; --orange: #FF9500; --purple: #AF52DE;
+    --border: #C6C6C8; --separator: rgba(60,60,67,0.12);
+    --shadow: rgba(0,0,0,0.04); --shadow-md: rgba(0,0,0,0.08);
+    --stage-digest: #8E8E93; --stage-postabs: #34C759;
+    --stage-glycogen: #FF9500; --stage-fatburn: #FF6B35;
+    --stage-ketosis: #FF3B30; --stage-autophagy: #AF52DE;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', BlinkMacSystemFont, system-ui, sans-serif;
     background: var(--bg); color: var(--text);
     line-height: 1.5; min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
   }
 
-  .app { max-width: 480px; margin: 0 auto; padding: 20px 16px 100px; }
+  .app { max-width: 480px; margin: 0 auto; padding: 16px 16px 100px; padding-top: calc(16px + var(--safe-top)); }
 
-  header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 24px; }
-  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 0 20px;
+  }
+  header h1 {
+    font-size: 34px; font-weight: 700; letter-spacing: -0.01em;
+  }
 
   .tabs {
-    display: flex; gap: 2px; background: var(--bg-card-alt);
-    border-radius: var(--radius-sm); padding: 3px; border: 1px solid var(--border-light);
+    display: flex; gap: 0; background: var(--bg-input);
+    border-radius: 9px; padding: 2px;
   }
   .tab {
-    padding: 6px 14px; font-size: 13px; font-weight: 500;
+    padding: 6px 16px; font-size: 13px; font-weight: 600;
     border: none; background: transparent; color: var(--text-muted);
-    cursor: pointer; border-radius: 6px; transition: all 0.2s;
+    cursor: pointer; border-radius: 7px; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
   }
-  .tab.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
+  .tab.active {
+    background: var(--bg-card); color: var(--text);
+    box-shadow: 0 1px 4px var(--shadow-md), 0 0.5px 1px var(--shadow);
+  }
 
   .view { display: none; }
   .view.active { display: block; }
 
-  /* Timer */
-  .timer-ring-wrap { position: relative; width: 280px; height: 280px; margin: 20px auto 28px; }
+  /* Timer ring */
+  .timer-ring-wrap { position: relative; width: 260px; height: 260px; margin: 24px auto 28px; }
   .timer-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: var(--border-light); stroke-width: 6; }
+  .ring-bg { fill: none; stroke: var(--separator); stroke-width: 8; }
   .ring-progress {
-    fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round;
+    fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round;
     stroke-dasharray: 816; stroke-dashoffset: 816;
     transition: stroke-dashoffset 1s ease, stroke 0.5s ease;
   }
-  .timer-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .timer-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; width: 200px;
+  }
   .timer-digits {
-    font-family: 'SF Mono', Menlo, Consolas, monospace;
-    font-size: 42px; font-weight: 300; letter-spacing: -0.02em;
+    font-family: -apple-system, 'SF Mono', ui-monospace, monospace;
+    font-size: 44px; font-weight: 200; letter-spacing: -0.5px;
     font-variant-numeric: tabular-nums; color: var(--text);
   }
-  .timer-label { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .timer-label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
   .current-stage-badge {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 500; margin-top: 8px;
+    padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 8px;
   }
   .current-stage-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
 
-  /* Stages */
+  /* Stages timeline */
   .stages-timeline { margin: 0 0 24px; }
   .stages-timeline h3 {
     font-size: 13px; font-weight: 600; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;
+    text-transform: uppercase; letter-spacing: 0.02em; margin-bottom: 10px;
+    padding: 0 4px;
   }
-  .stage-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; position: relative; }
+  .stage-item {
+    display: flex; align-items: flex-start; gap: 14px; padding: 11px 0;
+    position: relative;
+  }
   .stage-item:not(:last-child)::after {
-    content: ''; position: absolute; left: 11px; top: 32px; bottom: -2px;
-    width: 2px; background: var(--border-light);
+    content: ''; position: absolute; left: 13px; top: 36px; bottom: -2px;
+    width: 2px; background: var(--separator); border-radius: 1px;
   }
-  .stage-item.reached:not(:last-child)::after { background: var(--accent-light); }
+  .stage-item.reached:not(:last-child)::after { background: var(--accent); opacity: 0.4; }
   .stage-dot {
-    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border);
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2.5px solid var(--separator);
     flex-shrink: 0; display: flex; align-items: center; justify-content: center;
     background: var(--bg-card); transition: all 0.3s;
   }
-  .stage-item.reached .stage-dot { border-color: var(--accent); background: var(--accent); }
-  .stage-item.reached .stage-dot::after { content: '✓'; font-size: 12px; color: #fff; }
-  .stage-item.current .stage-dot { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg); }
+  .stage-item.reached .stage-dot {
+    border-color: var(--accent); background: var(--accent);
+  }
+  .stage-item.reached .stage-dot::after {
+    content: ''; width: 10px; height: 6px;
+    border-left: 2px solid #fff; border-bottom: 2px solid #fff;
+    transform: rotate(-45deg); margin-top: -2px;
+  }
+  .stage-item.current .stage-dot {
+    border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg);
+  }
   .stage-item.current .stage-dot::after {
     content: ''; width: 8px; height: 8px; border-radius: 50%;
     background: var(--accent); animation: pulse 2s infinite;
   }
-  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
   .stage-info { flex: 1; min-width: 0; }
-  .stage-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .stage-name { font-size: 15px; font-weight: 600; color: var(--text); }
   .stage-item:not(.reached):not(.current) .stage-name { color: var(--text-muted); }
-  .stage-time { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-  .stage-desc { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
-  .stage-item:not(.reached):not(.current) .stage-desc { color: var(--text-muted); }
+  .stage-time { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; margin-top: 1px; }
+  .stage-desc { font-size: 13px; color: var(--text-sub); margin-top: 2px; opacity: 0.7; }
+  .stage-item:not(.reached):not(.current) .stage-desc { color: var(--text-muted); opacity: 0.5; }
 
-  /* Cards */
+  /* iOS grouped card */
   .card {
-    background: var(--bg-card); border: 1px solid var(--border-light);
-    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
-    box-shadow: 0 1px 3px var(--shadow);
+    background: var(--bg-card);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 12px;
+    box-shadow: none;
   }
-  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .card h3 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
 
   /* Form */
   .input-group { margin-bottom: 14px; }
-  .input-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-sub); margin-bottom: 6px; }
-  .input-group input, .input-group textarea, .input-group select {
-    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
-    font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;
+  .input-group label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.02em;
   }
-  .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
+  .input-group input, .input-group textarea, .input-group select {
+    width: 100%; padding: 12px 14px; border: none;
+    border-radius: var(--radius-sm); background: var(--bg);
+    color: var(--text); font-size: 16px; font-family: inherit; outline: none;
+    transition: box-shadow 0.2s;
+  }
+  .input-group input:focus, .input-group textarea:focus {
+    box-shadow: 0 0 0 3px var(--accent-bg);
+  }
   .input-group textarea { resize: vertical; min-height: 60px; }
 
   /* Buttons */
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 12px 24px; border: none; border-radius: var(--radius-sm);
-    font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
-    transition: all 0.2s; width: 100%;
+    padding: 14px 24px; border: none; border-radius: 14px;
+    font-size: 17px; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s; width: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
+  .btn:active { transform: scale(0.98); opacity: 0.85; }
   .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent-light); }
-  .btn-danger { background: var(--danger-bg); color: var(--danger); }
-  .btn-danger:hover { opacity: 0.85; }
-  .btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--bg-card-alt); }
+  .btn-danger { background: var(--red-bg); color: var(--red); }
+  .btn-ghost { background: var(--bg); color: var(--text-sub); }
   .btn-row { display: flex; gap: 10px; margin-top: 16px; }
   .btn-row .btn { flex: 1; }
 
-  /* Mode toggle */
+  /* Mode toggle = iOS segmented control */
   .mode-toggle {
-    display: flex; gap: 2px; background: var(--bg-card-alt);
-    border-radius: 6px; padding: 2px; margin-bottom: 16px; border: 1px solid var(--border-light);
+    display: flex; gap: 0; background: var(--bg-input);
+    border-radius: 9px; padding: 2px; margin-bottom: 16px;
   }
   .mode-btn {
-    flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 500;
+    flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 600;
     border: none; background: transparent; color: var(--text-muted);
-    cursor: pointer; border-radius: 5px; transition: all 0.2s; text-align: center;
+    cursor: pointer; border-radius: 7px; transition: all 0.2s; text-align: center;
+    -webkit-tap-highlight-color: transparent;
   }
-  .mode-btn.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
+  .mode-btn.active {
+    background: var(--bg-card); color: var(--text);
+    box-shadow: 0 1px 4px var(--shadow-md), 0 0.5px 1px var(--shadow);
+  }
 
-  /* Food search (detailed mode) */
+  /* Food search */
   .food-search-wrap { position: relative; margin-bottom: 12px; }
   .food-search {
-    width: 100%; padding: 10px 12px 10px 34px; border: 1px solid var(--border);
-    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
-    font-size: 14px; font-family: inherit; outline: none;
+    width: 100%; padding: 10px 14px 10px 36px; border: none;
+    border-radius: var(--radius-sm); background: var(--bg);
+    color: var(--text); font-size: 16px; font-family: inherit; outline: none;
   }
-  .food-search:focus { border-color: var(--accent); }
+  .food-search:focus { box-shadow: 0 0 0 3px var(--accent-bg); }
   .food-search-icon {
-    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
     font-size: 14px; color: var(--text-muted); pointer-events: none;
   }
   .food-dropdown {
     display: none; position: absolute; top: 100%; left: 0; right: 0;
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); max-height: 240px; overflow-y: auto;
-    z-index: 20; box-shadow: 0 4px 12px var(--shadow-md); margin-top: 4px;
+    background: var(--bg-card); border-radius: var(--radius-sm);
+    max-height: 280px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    z-index: 20; box-shadow: 0 8px 30px var(--shadow-md); margin-top: 6px;
   }
   .food-dropdown.show { display: block; }
   .food-option {
-    padding: 10px 12px; cursor: pointer; display: flex;
+    padding: 12px 14px; cursor: pointer; display: flex;
     justify-content: space-between; align-items: center;
-    font-size: 14px; transition: background 0.1s;
+    font-size: 15px; transition: background 0.1s;
   }
-  .food-option:hover { background: var(--bg-card-alt); }
-  .food-option .meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .food-option:not(:last-child) { border-bottom: 0.5px solid var(--separator); }
+  .food-option:hover, .food-option:active { background: var(--bg); }
+  .food-option .meta { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
   .food-cat-label {
-    padding: 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.04em; background: var(--bg-card-alt);
-    position: sticky; top: 0;
+    padding: 8px 14px 4px; font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.02em;
+    background: var(--bg-card); position: sticky; top: 0;
   }
 
-  /* Added foods list */
+  /* Added foods */
   .added-foods { margin-bottom: 14px; }
   .added-food {
-    display: flex; align-items: center; gap: 8px; padding: 8px 0;
-    border-bottom: 1px solid var(--border-light); font-size: 14px;
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-bottom: 0.5px solid var(--separator); font-size: 15px;
   }
   .added-food:last-child { border-bottom: none; }
   .added-food .name { flex: 1; }
   .added-food .grams {
-    width: 64px; padding: 4px 8px; border: 1px solid var(--border);
-    border-radius: 6px; background: var(--bg); color: var(--text);
-    font-size: 13px; text-align: center; font-family: inherit; outline: none;
-    font-variant-numeric: tabular-nums;
+    width: 64px; padding: 6px 8px; border: none;
+    border-radius: 8px; background: var(--bg);
+    color: var(--text); font-size: 15px; text-align: center;
+    font-family: inherit; outline: none; font-variant-numeric: tabular-nums;
   }
-  .added-food .grams:focus { border-color: var(--accent); }
-  .added-food .unit { font-size: 12px; color: var(--text-muted); }
+  .added-food .grams:focus { box-shadow: 0 0 0 3px var(--accent-bg); }
+  .added-food .unit { font-size: 13px; color: var(--text-muted); }
   .added-food .remove {
     background: none; border: none; color: var(--text-muted); cursor: pointer;
-    font-size: 16px; padding: 2px 6px; border-radius: 4px; line-height: 1;
+    font-size: 18px; padding: 4px 8px; border-radius: 50%; line-height: 1;
   }
-  .added-food .remove:hover { color: var(--danger); background: var(--danger-bg); }
+  .added-food .remove:active { color: var(--red); background: var(--red-bg); }
 
-  /* Macro summary bar */
+  /* Macro summary */
   .macro-summary {
-    display: flex; gap: 12px; padding: 12px 14px;
-    background: var(--bg-card-alt); border-radius: var(--radius-sm);
+    display: flex; gap: 0; padding: 14px;
+    background: var(--bg); border-radius: var(--radius-sm);
     margin-bottom: 14px; align-items: center;
   }
   .macro-item { text-align: center; flex: 1; }
-  .macro-val { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .macro-label { font-size: 11px; color: var(--text-muted); }
+  .macro-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .macro-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; }
   .macro-bar {
-    flex: 2; height: 8px; border-radius: 4px; overflow: hidden;
-    display: flex; background: var(--border-light);
+    flex: 2; height: 6px; border-radius: 3px; overflow: hidden;
+    display: flex; background: var(--separator);
   }
   .macro-bar span { height: 100%; transition: width 0.3s; }
-  .macro-bar .carb-bar { background: #D4864A; }
-  .macro-bar .protein-bar { background: #6B9E7E; }
-  .macro-bar .fat-bar { background: #C8956C; }
+  .macro-bar .carb-bar { background: var(--orange); }
+  .macro-bar .protein-bar { background: var(--accent); }
+  .macro-bar .fat-bar { background: #FFD60A; }
 
-  /* Quick mode sliders */
+  /* Quick mode chips */
   .quick-option { margin-bottom: 16px; }
-  .quick-option label { display: block; font-size: 13px; font-weight: 500; color: var(--text-sub); margin-bottom: 8px; }
-  .quick-chips { display: flex; gap: 6px; }
+  .quick-option label {
+    display: block; font-size: 13px; font-weight: 600;
+    color: var(--text-muted); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 0.02em;
+  }
+  .quick-chips { display: flex; gap: 8px; }
   .quick-chip {
-    flex: 1; padding: 10px 6px; border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm); background: var(--bg-card);
-    font-size: 13px; font-weight: 500; color: var(--text-sub);
+    flex: 1; padding: 12px 6px; border: none;
+    border-radius: var(--radius-sm); background: var(--bg);
+    font-size: 14px; font-weight: 600; color: var(--text-sub);
     cursor: pointer; transition: all 0.2s; text-align: center;
+    -webkit-tap-highlight-color: transparent;
   }
-  .quick-chip:hover { border-color: var(--accent-light); }
-  .quick-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
-  .quick-chip .sub { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
+  .quick-chip.selected { background: var(--accent-bg); color: var(--accent); }
+  .quick-chip .sub { display: block; font-size: 11px; color: var(--text-muted); margin-top: 3px; font-weight: 400; }
+  .quick-chip.selected .sub { color: var(--accent); opacity: 0.7; }
 
-  /* Goal */
-  .goal-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  /* Goal chips */
+  .goal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
   .goal-chip {
-    padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px;
-    background: var(--bg-card); font-size: 13px; font-weight: 500;
+    padding: 8px 18px; border: none; border-radius: 20px;
+    background: var(--bg); font-size: 15px; font-weight: 600;
     color: var(--text-sub); cursor: pointer; transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
   }
-  .goal-chip:hover { border-color: var(--accent-light); }
-  .goal-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .goal-chip.selected { background: var(--accent-bg); color: var(--accent); }
 
-  /* Experience setting */
+  /* Experience chips */
   .exp-setting {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; background: var(--bg-card-alt);
-    border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 13px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; background: var(--bg);
+    border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 14px;
   }
-  .exp-setting label { color: var(--text-sub); font-weight: 500; white-space: nowrap; }
+  .exp-setting label { color: var(--text-sub); font-weight: 600; white-space: nowrap; font-size: 14px; }
   .exp-chips { display: flex; gap: 4px; flex: 1; }
   .exp-chip {
-    flex: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--bg-card); font-size: 12px; color: var(--text-muted);
-    cursor: pointer; text-align: center; transition: all 0.15s; font-weight: 500;
+    flex: 1; padding: 6px 8px; border: none; border-radius: 8px;
+    background: var(--bg-card); font-size: 13px; color: var(--text-muted);
+    cursor: pointer; text-align: center; transition: all 0.15s; font-weight: 600;
+    -webkit-tap-highlight-color: transparent;
   }
-  .exp-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .exp-chip.selected { background: var(--accent-bg); color: var(--accent); }
 
   /* History */
-  .history-item { padding: 14px 0; border-bottom: 1px solid var(--border-light); }
+  .history-item {
+    padding: 14px 0; border-bottom: 0.5px solid var(--separator);
+  }
   .history-item:last-child { border-bottom: none; }
   .history-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
   .history-date { font-size: 13px; color: var(--text-muted); }
-  .history-duration { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .history-meal { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; }
+  .history-duration { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .history-meal { font-size: 14px; color: var(--text-sub); margin-bottom: 6px; }
   .history-stages { display: flex; gap: 4px; flex-wrap: wrap; }
-  .history-stage-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
-  .history-feeling { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+  .history-stage-tag { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
+  .history-feeling { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
 
-  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .stat-box { text-align: center; padding: 14px 8px; background: var(--bg-card-alt); border-radius: var(--radius-sm); }
-  .stat-val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
-  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .stat-box {
+    text-align: center; padding: 16px 8px;
+    background: var(--bg-card); border-radius: var(--radius);
+  }
+  .stat-val { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.02em; font-weight: 500; }
 
-  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-  .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
-  .empty-state p { font-size: 14px; }
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; line-height: 1.6; }
   .delete-btn {
     background: none; border: none; color: var(--text-muted); cursor: pointer;
-    font-size: 12px; padding: 2px 6px; border-radius: 4px;
+    font-size: 13px; padding: 4px 8px; border-radius: 6px;
   }
-  .delete-btn:hover { color: var(--danger); background: var(--danger-bg); }
+  .delete-btn:active { color: var(--red); background: var(--red-bg); }
 
-  /* Modal */
+  /* Modal - iOS action sheet style */
   .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3);
     z-index: 100; align-items: flex-end; justify-content: center;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
   }
   .modal-overlay.show { display: flex; }
   .modal {
-    background: var(--bg-card); border-radius: var(--radius) var(--radius) 0 0;
-    padding: 24px 20px 40px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto;
+    background: var(--bg-card); border-radius: 20px 20px 0 0;
+    padding: 8px 20px 40px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
-  .feeling-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 16px; }
+  .modal::before {
+    content: ''; display: block; width: 36px; height: 5px;
+    background: var(--bg-input); border-radius: 3px;
+    margin: 8px auto 20px;
+  }
+  .modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; text-align: center; }
+  .feeling-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 20px; }
   .feeling-btn {
-    padding: 10px 4px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-    background: var(--bg-card); cursor: pointer; text-align: center; transition: all 0.2s; font-size: 20px;
+    padding: 12px 4px; border: none; border-radius: var(--radius-sm);
+    background: var(--bg); cursor: pointer; text-align: center;
+    transition: all 0.15s; font-size: 24px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .feeling-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
-  .feeling-btn span { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .feeling-btn.selected { background: var(--accent-bg); transform: scale(1.05); }
+  .feeling-btn span { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-  /* Exercise check-in */
-  .exercise-card { margin-bottom: 16px; }
+  /* Exercise */
+  .exercise-card { margin-bottom: 12px; }
   .exercise-card h3 { display: flex; align-items: center; justify-content: space-between; }
   .exercise-card h3 .boost {
-    font-size: 12px; font-weight: 500; color: var(--warm);
-    background: var(--warm-bg); padding: 3px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 600; color: var(--orange);
+    background: rgba(255,149,0,0.12); padding: 4px 10px; border-radius: 12px;
   }
   .exercise-log { margin-bottom: 12px; }
   .exercise-entry {
-    display: flex; align-items: center; gap: 10px; padding: 8px 0;
-    border-bottom: 1px solid var(--border-light); font-size: 13px;
+    display: flex; align-items: center; gap: 12px; padding: 10px 0;
+    border-bottom: 0.5px solid var(--separator); font-size: 14px;
   }
   .exercise-entry:last-child { border-bottom: none; }
-  .exercise-entry .ex-icon { font-size: 18px; }
+  .exercise-entry .ex-icon { font-size: 20px; }
   .exercise-entry .ex-info { flex: 1; }
-  .exercise-entry .ex-name { font-weight: 500; }
-  .exercise-entry .ex-meta { font-size: 11px; color: var(--text-muted); }
-  .exercise-entry .ex-effect { font-size: 11px; color: var(--warm); font-weight: 500; }
+  .exercise-entry .ex-name { font-weight: 600; font-size: 15px; }
+  .exercise-entry .ex-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .exercise-entry .ex-effect { font-size: 12px; color: var(--orange); font-weight: 600; }
   .exercise-entry .remove {
     background: none; border: none; color: var(--text-muted); cursor: pointer;
-    font-size: 14px; padding: 2px 6px; border-radius: 4px; line-height: 1;
+    font-size: 16px; padding: 4px 8px; border-radius: 50%; line-height: 1;
   }
-  .exercise-entry .remove:hover { color: var(--danger); background: var(--danger-bg); }
-  .exercise-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .exercise-entry .remove:active { color: var(--red); background: var(--red-bg); }
+  .exercise-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .ex-type-btn {
-    padding: 10px 6px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-    background: var(--bg-card); cursor: pointer; text-align: center; transition: all 0.2s;
+    padding: 12px 6px; border: none; border-radius: var(--radius-sm);
+    background: var(--bg); cursor: pointer; text-align: center;
+    transition: all 0.15s; -webkit-tap-highlight-color: transparent;
   }
-  .ex-type-btn:hover { border-color: var(--accent-light); background: var(--accent-bg); }
-  .ex-type-btn .ex-emoji { font-size: 20px; display: block; margin-bottom: 2px; }
-  .ex-type-btn .ex-label { font-size: 12px; font-weight: 500; color: var(--text); display: block; }
+  .ex-type-btn:active { background: var(--accent-bg); }
+  .ex-type-btn .ex-emoji { font-size: 24px; display: block; margin-bottom: 4px; }
+  .ex-type-btn .ex-label { font-size: 12px; font-weight: 600; color: var(--text); display: block; }
   .ex-type-btn .ex-hint { font-size: 10px; color: var(--text-muted); display: block; }
   .exercise-duration-row {
-    display: none; margin-top: 10px; align-items: center; gap: 8px;
+    display: none; margin-top: 12px; align-items: center; gap: 10px;
   }
   .exercise-duration-row.show { display: flex; }
-  .exercise-duration-row label { font-size: 13px; color: var(--text-sub); white-space: nowrap; }
+  .exercise-duration-row label { font-size: 14px; color: var(--text-sub); white-space: nowrap; font-weight: 500; }
   .exercise-duration-row input {
-    width: 70px; padding: 6px 10px; border: 1px solid var(--border);
-    border-radius: 6px; background: var(--bg); color: var(--text);
-    font-size: 14px; text-align: center; font-family: inherit; outline: none;
+    width: 72px; padding: 8px 10px; border: none;
+    border-radius: 8px; background: var(--bg); color: var(--text);
+    font-size: 16px; text-align: center; font-family: inherit; outline: none;
   }
-  .exercise-duration-row input:focus { border-color: var(--accent); }
-  .exercise-duration-row .unit { font-size: 13px; color: var(--text-muted); }
-  .exercise-duration-row .btn { width: auto; padding: 6px 16px; font-size: 13px; }
+  .exercise-duration-row input:focus { box-shadow: 0 0 0 3px var(--accent-bg); }
+  .exercise-duration-row .unit { font-size: 14px; color: var(--text-muted); }
+  .exercise-duration-row .btn { width: auto; padding: 8px 20px; font-size: 15px; border-radius: 10px; }
 
-  /* Onboarding */
+  /* Onboarding - iOS welcome screen style */
   .onboarding {
     position: fixed; inset: 0; background: var(--bg); z-index: 200;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 32px 24px; text-align: center; overflow-y: auto;
+    padding: 40px 24px; text-align: center; overflow-y: auto;
   }
   .onboarding.hide { display: none; }
-  .ob-icon { font-size: 64px; margin-bottom: 16px; }
-  .ob-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
-  .ob-sub { font-size: 15px; color: var(--text-sub); margin-bottom: 32px; max-width: 320px; line-height: 1.6; }
-  .ob-steps { text-align: left; max-width: 340px; width: 100%; margin-bottom: 32px; }
-  .ob-step {
-    display: flex; gap: 12px; align-items: flex-start; padding: 12px 0;
-    border-bottom: 1px solid var(--border-light);
+  .ob-icon { font-size: 72px; margin-bottom: 20px; }
+  .ob-title { font-size: 34px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+  .ob-sub {
+    font-size: 17px; color: var(--text-sub); margin-bottom: 40px;
+    max-width: 320px; line-height: 1.6; opacity: 0.8;
   }
-  .ob-step:last-child { border-bottom: none; }
+  .ob-steps {
+    text-align: left; max-width: 340px; width: 100%; margin-bottom: 40px;
+    background: var(--bg-card); border-radius: var(--radius); padding: 4px 0;
+  }
+  .ob-step {
+    display: flex; gap: 14px; align-items: flex-start; padding: 14px 20px;
+  }
+  .ob-step:not(:last-child) { border-bottom: 0.5px solid var(--separator); }
   .ob-num {
-    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-bg);
-    color: var(--accent); font-size: 13px; font-weight: 700;
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .ob-step-text { font-size: 14px; line-height: 1.5; }
+  .ob-step-text { font-size: 15px; line-height: 1.5; }
   .ob-step-text strong { font-weight: 600; }
-  .ob-step-text span { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .ob-step-text span { display: block; font-size: 13px; color: var(--text-muted); margin-top: 2px; }
   .ob-features {
-    display: flex; gap: 16px; margin-bottom: 32px; max-width: 340px; width: 100;
+    display: flex; gap: 12px; margin-bottom: 40px; max-width: 340px; width: 100%;
   }
   .ob-feat {
-    flex: 1; text-align: center; padding: 14px 8px;
-    background: var(--bg-card); border: 1px solid var(--border-light);
-    border-radius: var(--radius-sm);
+    flex: 1; text-align: center; padding: 16px 8px;
+    background: var(--bg-card); border-radius: var(--radius);
   }
-  .ob-feat-icon { font-size: 24px; margin-bottom: 4px; }
-  .ob-feat-label { font-size: 12px; color: var(--text-sub); font-weight: 500; }
+  .ob-feat-icon { font-size: 28px; margin-bottom: 6px; }
+  .ob-feat-label { font-size: 12px; color: var(--text-sub); font-weight: 600; }
 
   @media (prefers-reduced-motion: reduce) {
     *,*::before,*::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
@@ -441,19 +516,19 @@
   <div class="ob-steps">
     <div class="ob-step">
       <div class="ob-num">1</div>
-      <div class="ob-step-text"><strong>记录上一餐</strong><span>精确输入食物和克重，或快速估算碳水和份量</span></div>
+      <div class="ob-step-text"><strong>记录上一餐</strong><span>精确输入食物和克重，或快速估算</span></div>
     </div>
     <div class="ob-step">
       <div class="ob-num">2</div>
-      <div class="ob-step-text"><strong>开始断食</strong><span>系统根据你的饮食自动计算消化→糖原耗尽→燃脂→酮症的时间线</span></div>
+      <div class="ob-step-text"><strong>开始断食</strong><span>自动计算消化 → 糖原耗尽 → 燃脂 → 酮症</span></div>
     </div>
     <div class="ob-step">
       <div class="ob-num">3</div>
-      <div class="ob-step-text"><strong>运动打卡（可选）</strong><span>断食中运动会加速进程，不同阶段运动效果不同</span></div>
+      <div class="ob-step-text"><strong>运动打卡</strong><span>运动加速断食进程，不同阶段效果不同</span></div>
     </div>
     <div class="ob-step">
       <div class="ob-num">4</div>
-      <div class="ob-step-text"><strong>结束并记录</strong><span>记录体重和感受，查看历史统计</span></div>
+      <div class="ob-step-text"><strong>结束记录</strong><span>记录体重和感受，查看统计</span></div>
     </div>
   </div>
   <div class="ob-features">
@@ -466,7 +541,7 @@
 
 <div class="app">
   <header>
-    <h1>断食追踪</h1>
+    <h1>断食</h1>
     <div class="tabs">
       <button class="tab active" data-view="timer">追踪</button>
       <button class="tab" data-view="history">记录</button>
@@ -487,7 +562,7 @@
         <div id="mode-detailed">
           <div class="food-search-wrap">
             <span class="food-search-icon">🔍</span>
-            <input class="food-search" id="food-search" type="text" placeholder="搜索食物，如：米饭、鸡蛋、牛肉..." autocomplete="off">
+            <input class="food-search" id="food-search" type="text" placeholder="搜索食物..." autocomplete="off">
             <div class="food-dropdown" id="food-dropdown"></div>
           </div>
           <div class="added-foods" id="added-foods"></div>
@@ -497,15 +572,15 @@
               <div class="macro-label">千卡</div>
             </div>
             <div class="macro-item">
-              <div class="macro-val" style="color:var(--stage-fatburn)" id="total-carb">0g</div>
+              <div class="macro-val" style="color:var(--orange)" id="total-carb">0g</div>
               <div class="macro-label">碳水</div>
             </div>
             <div class="macro-item">
-              <div class="macro-val" style="color:var(--stage-postabs)" id="total-protein">0g</div>
+              <div class="macro-val" style="color:var(--accent)" id="total-protein">0g</div>
               <div class="macro-label">蛋白质</div>
             </div>
             <div class="macro-item">
-              <div class="macro-val" style="color:var(--stage-glycogen)" id="total-fat">0g</div>
+              <div class="macro-val" style="color:#FFD60A" id="total-fat">0g</div>
               <div class="macro-label">脂肪</div>
             </div>
           </div>
@@ -520,10 +595,10 @@
         <div id="mode-quick" style="display:none;">
           <div class="input-group">
             <label>吃了什么（选填）</label>
-            <textarea id="meal-desc-quick" placeholder="简单描述，如：吃了碗面、一份盖饭..." style="min-height:50px;"></textarea>
+            <textarea id="meal-desc-quick" placeholder="简单描述，如：吃了碗面..." style="min-height:50px;"></textarea>
           </div>
           <div class="quick-option">
-            <label>碳水多少</label>
+            <label>碳水量</label>
             <div class="quick-chips" id="carb-level">
               <button class="quick-chip" data-val="very-low">很少<span class="sub">纯肉菜</span></button>
               <button class="quick-chip" data-val="low">少量<span class="sub">小碗饭</span></button>
@@ -532,7 +607,7 @@
             </div>
           </div>
           <div class="quick-option">
-            <label>吃了多少</label>
+            <label>食量</label>
             <div class="quick-chips" id="portion-level">
               <button class="quick-chip" data-val="light">少量<span class="sub">垫了垫</span></button>
               <button class="quick-chip selected" data-val="normal">正常<span class="sub">七八分饱</span></button>
@@ -545,12 +620,12 @@
           <label>体重</label>
           <div style="display:flex;align-items:center;gap:6px;flex:1;">
             <input type="number" id="user-weight" placeholder="kg" step="0.1" min="30" max="200"
-              style="width:72px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center;font-family:inherit;outline:none;">
-            <span style="font-size:12px;color:var(--text-muted);">kg</span>
+              style="width:72px;padding:6px 8px;border:none;border-radius:8px;background:var(--bg-card);color:var(--text);font-size:15px;text-align:center;font-family:inherit;outline:none;">
+            <span style="font-size:13px;color:var(--text-muted);">kg</span>
           </div>
         </div>
         <div class="exp-setting">
-          <label>断食经验</label>
+          <label>经验</label>
           <div class="exp-chips" id="exp-level">
             <button class="exp-chip" data-val="beginner">新手</button>
             <button class="exp-chip selected" data-val="intermediate">有经验</button>
@@ -558,7 +633,7 @@
           </div>
         </div>
 
-        <div class="input-group"><label>断食目标</label></div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.02em;margin-bottom:8px;">目标时长</div>
         <div class="goal-chips">
           <button class="goal-chip" data-hours="16">16h</button>
           <button class="goal-chip selected" data-hours="18">18h</button>
@@ -588,9 +663,9 @@
         </div>
       </div>
       <div class="card" style="padding:14px 16px;">
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">上一餐</div>
-        <div style="font-size:14px;" id="fasting-meal-info">—</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="fasting-macro-info"></div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">上一餐</div>
+        <div style="font-size:15px;" id="fasting-meal-info">—</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:4px;" id="fasting-macro-info"></div>
       </div>
       <div class="card exercise-card">
         <h3>
@@ -772,9 +847,6 @@ function calcMacroFromQuick(carbLevel, portionLevel) {
   return { carb, protein, fat, cal };
 }
 
-// Exercise database: MET values from Compendium of Physical Activities
-// carbRatio: fraction of energy from glycogen at this intensity
-// met: metabolic equivalent (kcal/kg/hr relative to rest)
 const EXERCISE_DB = {
   walk:     { name: '散步',   icon: '🚶', met: 3.5, carbRatio: 0.35 },
   yoga:     { name: '瑜伽',   icon: '🧘', met: 3.0, carbRatio: 0.30 },
@@ -791,7 +863,6 @@ const EXERCISE_DB = {
 };
 
 function getWeight() { return state.bodyWeight || 65; }
-// Liver glycogen capacity ~100g = 400kcal
 const GLYCOGEN_STORE_KCAL = 400;
 
 function calcExerciseGlycogenBurn(exercises) {
@@ -831,7 +902,6 @@ function calcStages(macro, experience, exercises) {
   if (experience === 'beginner') expFactor = 1.15;
   else if (experience === 'experienced') expFactor = 0.85;
 
-  // Base stage hours (no exercise)
   const baseHours = [
     0,
     Math.max(2, 3 + portionShift * 0.5),
@@ -842,15 +912,8 @@ function calcStages(macro, experience, exercises) {
     30 * carbFactor * expFactor
   ];
 
-  // Per-stage sensitivity to exercise:
-  //   digest (0): exercise mildly speeds gastric emptying (research: ~15-20% faster)
-  //   blood sugar (1): exercise accelerates glucose uptake by muscles
-  //   glycogen depletion (2,3): exercise directly burns glycogen — max effect
-  //   fat burning (4): already in fat-burning, exercise deepens it moderately
-  //   ketosis (5,6): diminishing returns — you're already there
   const stageSensitivity = [0.15, 0.3, 0.9, 1.0, 0.6, 0.3, 0.15];
 
-  // Calculate glycogen burned by each exercise relative to when it happened
   const stageBoosts = [0, 0, 0, 0, 0, 0, 0];
   (exercises || []).forEach(ex => {
     const info = EXERCISE_DB[ex.type];
@@ -859,19 +922,14 @@ function calcStages(macro, experience, exercises) {
     const hours = ex.minutes / 60;
     const calBurned = info.met * getWeight() * hours;
     const glycogenKcal = calBurned * info.carbRatio;
-    // Convert glycogen burned to hours of acceleration
-    // glycogenKcal / GLYCOGEN_STORE_KCAL = fraction of total store depleted
-    // Multiply by the glycogen-dependent phase duration (~12h baseline) to get hours saved
     const glycogenPhaseDuration = baseHours[3] - baseHours[2];
     const hoursSaved = (glycogenKcal / GLYCOGEN_STORE_KCAL) * glycogenPhaseDuration;
 
-    // Find which stage exercise occurred in
     let exStageIdx = 0;
     for (let i = baseHours.length - 1; i >= 0; i--) {
       if (exHour >= baseHours[i]) { exStageIdx = i; break; }
     }
 
-    // Apply boost to current and all later stages with decay
     for (let j = exStageIdx; j < stageBoosts.length; j++) {
       const distance = j - exStageIdx;
       const decay = Math.max(0, 1 - distance * 0.15);
@@ -918,16 +976,14 @@ function buildMealSummary() {
   return null;
 }
 
-// --- UI ---
-
 // --- Notifications ---
 const STAGE_NOTIF_MESSAGES = {
   '血糖稳定': { title: '血糖已稳定', body: '消化趋于完成，身体开始进入断食状态' },
   '糖原消耗': { title: '开始消耗糖原', body: '胰岛素降低，肝糖原储备正在被消耗' },
   '糖原耗尽': { title: '糖原基本耗尽', body: '身体正在寻找替代能源，即将进入燃脂' },
-  '脂肪燃烧': { title: '进入燃脂阶段 🔥', body: '脂肪酸氧化加速，你正在燃烧脂肪！' },
+  '脂肪燃烧': { title: '进入燃脂阶段', body: '脂肪酸氧化加速，你正在燃烧脂肪' },
   '初步酮症': { title: '进入酮症状态', body: '酮体水平上升，大脑开始使用酮体供能' },
-  '深度酮症': { title: '深度酮症 · 自噬激活', body: '细胞进入深层修复模式，继续保持！' },
+  '深度酮症': { title: '深度酮症', body: '自噬激活，细胞进入深层修复模式' },
 };
 
 function requestNotifPermission() {
@@ -967,9 +1023,8 @@ function checkStageNotifications() {
     }
   });
 
-  // Goal reached notification
   if (elapsedH >= state.goalHours && !state.notifiedStages.includes('_goal')) {
-    sendNotification('断食目标达成！', `你已完成 ${state.goalHours} 小时断食，太棒了！`);
+    sendNotification('断食目标达成', `已完成 ${state.goalHours} 小时断食`);
     state.notifiedStages.push('_goal');
     saveState();
   }
@@ -1021,7 +1076,6 @@ function bindEvents() {
     });
   });
 
-  // Food search
   const searchInput = document.getElementById('food-search');
   const dropdown = document.getElementById('food-dropdown');
   searchInput.addEventListener('focus', () => renderFoodDropdown(searchInput.value));
@@ -1030,7 +1084,6 @@ function bindEvents() {
     if (!e.target.closest('.food-search-wrap')) dropdown.classList.remove('show');
   });
 
-  // Quick mode chips
   setupChipGroup('carb-level', v => { state.quickCarb = v; });
   setupChipGroup('portion-level', v => { state.quickPortion = v; });
   document.getElementById('user-weight').addEventListener('change', e => {
@@ -1059,14 +1112,13 @@ function bindEvents() {
     });
   });
 
-  // Exercise
   let selectedExType = null;
   document.querySelectorAll('.ex-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       selectedExType = btn.dataset.type;
       document.getElementById('exercise-duration-row').classList.add('show');
-      document.querySelectorAll('.ex-type-btn').forEach(b => b.style.borderColor = '');
-      btn.style.borderColor = 'var(--accent)';
+      document.querySelectorAll('.ex-type-btn').forEach(b => { b.style.background = ''; b.style.boxShadow = ''; });
+      btn.style.background = 'var(--accent-bg)';
     });
   });
   document.getElementById('btn-add-exercise').addEventListener('click', () => {
@@ -1077,7 +1129,7 @@ function bindEvents() {
     saveState();
     selectedExType = null;
     document.getElementById('exercise-duration-row').classList.remove('show');
-    document.querySelectorAll('.ex-type-btn').forEach(b => b.style.borderColor = '');
+    document.querySelectorAll('.ex-type-btn').forEach(b => { b.style.background = ''; });
     renderExerciseLog();
     updateTimer();
   });
@@ -1105,12 +1157,12 @@ function renderFoodDropdown(query) {
       const idx = FOOD_DB.indexOf(cat);
       const itemIdx = cat.items.indexOf(f);
       html += `<div class="food-option" data-cat="${idx}" data-item="${itemIdx}">
-        <span>${f.name} <span style="color:var(--text-muted);font-size:12px;">(${f.defaultG}g/${f.unit})</span></span>
-        <span class="meta">碳${f.carb} 蛋${f.protein} 脂${f.fat}/100g</span>
+        <span>${f.name} <span style="color:var(--text-muted);font-size:13px;">(${f.defaultG}g/${f.unit})</span></span>
+        <span class="meta">碳${f.carb} 蛋${f.protein} 脂${f.fat}</span>
       </div>`;
     });
   });
-  if (!html) html = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">没找到，试试其他关键词</div>';
+  if (!html) html = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:15px;">没找到</div>';
   dropdown.innerHTML = html;
   dropdown.classList.add('show');
 
@@ -1179,8 +1231,9 @@ function startFast() {
   const meal = buildMealSummary();
   if (!meal) {
     if (state.inputMode === 'detailed') {
-      document.getElementById('food-search').style.borderColor = 'var(--danger)';
-      setTimeout(() => document.getElementById('food-search').style.borderColor = '', 800);
+      const s = document.getElementById('food-search');
+      s.style.boxShadow = '0 0 0 3px rgba(255,59,48,0.3)';
+      setTimeout(() => s.style.boxShadow = '', 800);
     }
     return;
   }
@@ -1246,15 +1299,15 @@ function renderExerciseLog() {
       <div class="ex-info">
         <div class="ex-name">${info.name} · ${ex.minutes}分钟</div>
         <div class="ex-meta">${pad(t.getHours())}:${pad(t.getMinutes())} · ${stageNames[exStageIdx]} · ${stageEffectLabel[exStageIdx]}</div>
-        <div class="ex-meta">消耗 ${calBurned}kcal · 其中糖原 ~${glycogenG}g</div>
+        <div class="ex-meta">消耗 ${calBurned}kcal · 糖原 ~${glycogenG}g</div>
       </div>
       <button class="remove" data-idx="${i}" onclick="removeExercise(${i})">×</button>
     </div>`;
   }).join('');
 
   if (exercises.length > 0) {
-    log.innerHTML += `<div style="font-size:11px;color:var(--text-muted);padding:6px 0 2px;border-top:1px solid var(--border-light);margin-top:4px;">
-      总消耗 ${Math.round(totalCalBurned)}kcal · 糖原消耗 ${glycogenPct}% (${Math.round(totalGlycogenKcal/4)}g / ~100g储备)
+    log.innerHTML += `<div style="font-size:12px;color:var(--text-muted);padding:8px 0 2px;border-top:0.5px solid var(--separator);margin-top:4px;">
+      总消耗 ${Math.round(totalCalBurned)}kcal · 糖原 ${glycogenPct}% (${Math.round(totalGlycogenKcal/4)}g / ~100g)
     </div>`;
   }
 }
@@ -1308,7 +1361,7 @@ function updateTimer() {
   badge.querySelector('.name').textContent = currentStage.name;
   badge.style.background = currentStage.color + '18';
   badge.style.color = currentStage.color;
-  ring.style.stroke = progress >= 1 ? 'var(--warm)' : 'var(--accent)';
+  ring.style.stroke = progress >= 1 ? 'var(--orange)' : 'var(--accent)';
 
   renderStages(stages, elapsedH);
   checkStageNotifications();
@@ -1407,7 +1460,7 @@ function renderHistory() {
     const tags = (r.reachedStages || []).map(s =>
       `<span class="history-stage-tag" style="background:${stageColors[s]||'var(--stage-digest)'}18;color:${stageColors[s]||'var(--stage-digest)'}">${s}</span>`
     ).join('');
-    const macroText = r.mealMacro ? ` · ${r.mealMacro.cal}kcal 碳${r.mealMacro.carb}g` : '';
+    const macroText = r.mealMacro ? ` · ${r.mealMacro.cal}kcal` : '';
     return `<div class="history-item">
       <div class="history-top">
         <div>
@@ -1416,7 +1469,7 @@ function renderHistory() {
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <div class="history-duration">${dH}h</div>
-          <button class="delete-btn" onclick="deleteRecord(${idx})">✕</button>
+          <button class="delete-btn" onclick="deleteRecord(${idx})">×</button>
         </div>
       </div>
       <div class="history-stages">${tags}</div>
