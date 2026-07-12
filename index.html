@@ -606,9 +606,6 @@
           <div id="ai-loading" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">
             分析中...
           </div>
-          <div id="ai-no-config" style="display:none;text-align:center;padding:16px;color:var(--text-muted);font-size:13px;line-height:1.6;">
-            未配置 AI 接口，前往「设置」页面配置后即可使用拍照识别。<br>也可以切换到「手动记录」模式。
-          </div>
         </div>
 
         <div class="exp-setting">
@@ -739,35 +736,16 @@
     <div class="card">
       <h3>AI 拍照识别</h3>
       <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
-        拍照识别功能需要 AI 接口。选择一个服务商并填入 API Key 即可使用。
+        拍照识别默认使用内置 AI 服务，无需配置。<br>如果你想使用自己的 AI 接口，可以在下方填写。
       </div>
-      <div class="quick-option">
-        <label>AI 服务</label>
-        <div class="quick-chips" id="ai-provider">
-          <button class="quick-chip selected" data-val="gemini">Gemini<span class="sub">免费</span></button>
-          <button class="quick-chip" data-val="openai">OpenAI</button>
-          <button class="quick-chip" data-val="custom">自定义</button>
-        </div>
+      <div class="input-group">
+        <label>自定义接口地址（选填）</label>
+        <input type="text" id="ai-custom-url" placeholder="留空则使用默认服务">
       </div>
-      <div id="ai-key-section">
-        <div class="input-group">
-          <label>API Key</label>
-          <input type="password" id="ai-api-key" placeholder="粘贴你的 API Key">
-        </div>
-        <div id="ai-key-hint" style="font-size:12px;color:var(--text-muted);margin-top:-8px;margin-bottom:14px;line-height:1.5;">
-          前往 <span style="color:var(--accent);font-weight:600;">aistudio.google.com/apikey</span> 免费获取 Gemini API Key
-        </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:-8px;margin-bottom:14px;line-height:1.5;">
+        POST 请求，发送 { image, description }，返回 { cal, carb, protein, fat, description }
       </div>
-      <div id="ai-custom-section" style="display:none;">
-        <div class="input-group">
-          <label>接口地址</label>
-          <input type="text" id="ai-custom-url" placeholder="https://your-api.com/analyze">
-        </div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:-8px;margin-bottom:14px;line-height:1.5;">
-          POST 请求，发送 { image, description }，返回 { cal, carb, protein, fat, description }
-        </div>
-      </div>
-      <button class="btn btn-primary" id="btn-save-ai" style="margin-bottom:8px;">保存设置</button>
+      <button class="btn btn-primary" id="btn-save-ai" style="margin-bottom:8px;">保存</button>
       <div id="ai-save-status" style="text-align:center;font-size:13px;color:var(--accent);display:none;margin-top:8px;"></div>
     </div>
     <div class="card">
@@ -1036,23 +1014,14 @@ function buildMealSummary() {
   return null;
 }
 
+const DEFAULT_AI_URL = 'https://diet-ai.YOUR_SUBDOMAIN.workers.dev';
+
 function getAIConfig() {
   try { return JSON.parse(localStorage.getItem('fasting-ai-config') || '{}'); } catch(e) { return {}; }
 }
 function saveAIConfig(cfg) { localStorage.setItem('fasting-ai-config', JSON.stringify(cfg)); }
 
-const FOOD_PROMPT = `分析这张食物照片，估算整体营养成分。用户补充描述："{DESC}"
-
-请直接返回一个 JSON 对象，不要任何其他文字：
-{"description":"食物简短描述","cal":整数千卡,"carb":整数克碳水,"protein":整数克蛋白质,"fat":整数克脂肪}`;
-
 async function analyzePhoto() {
-  const cfg = getAIConfig();
-  if (!cfg.provider || !cfg.key) {
-    document.getElementById('ai-no-config').style.display = '';
-    return;
-  }
-
   const desc = document.getElementById('meal-desc-quick').value.trim();
   const photoData = state._photoData;
   if (!photoData) return;
@@ -1061,14 +1030,15 @@ async function analyzePhoto() {
   document.getElementById('ai-result').style.display = 'none';
 
   try {
-    let data;
-    if (cfg.provider === 'gemini') {
-      data = await callGemini(cfg.key, photoData, desc);
-    } else if (cfg.provider === 'openai') {
-      data = await callOpenAI(cfg.key, photoData, desc);
-    } else if (cfg.provider === 'custom') {
-      data = await callCustom(cfg.key, photoData, desc);
-    }
+    const cfg = getAIConfig();
+    const url = (cfg.url && cfg.url.trim()) || DEFAULT_AI_URL;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: photoData, description: desc || '' })
+    });
+    if (!res.ok) throw new Error('api');
+    const data = await res.json();
 
     if (data && data.cal !== undefined) {
       state._aiMacro = { carb: data.carb, protein: data.protein, fat: data.fat, cal: data.cal };
@@ -1083,63 +1053,9 @@ async function analyzePhoto() {
   } catch(e) {
     document.getElementById('ai-result').style.display = '';
     document.getElementById('ai-result-content').innerHTML =
-      `<span style="color:var(--red);">${e.message === 'key' ? 'API Key 无效' : '识别失败'}，请使用下方手动估算</span>`;
+      '<span style="color:var(--red);">识别失败，请切换到「手动记录」</span>';
   }
   document.getElementById('ai-loading').style.display = 'none';
-}
-
-function extractJSON(text) {
-  const m = text.match(/\{[\s\S]*?\}/);
-  return m ? JSON.parse(m[0]) : null;
-}
-
-async function callGemini(key, photoData, desc) {
-  const base64 = photoData.split(',')[1];
-  const mime = photoData.match(/data:(.*?);/)[1];
-  const prompt = FOOD_PROMPT.replace('{DESC}', desc || '无');
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [
-        { text: prompt },
-        { inline_data: { mime_type: mime, data: base64 } }
-      ]}]
-    })
-  });
-  if (res.status === 400 || res.status === 403) throw new Error('key');
-  const json = await res.json();
-  const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  return extractJSON(text);
-}
-
-async function callOpenAI(key, photoData, desc) {
-  const prompt = FOOD_PROMPT.replace('{DESC}', desc || '无');
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: [
-        { type: 'text', text: prompt },
-        { type: 'image_url', image_url: { url: photoData, detail: 'low' } }
-      ]}],
-      max_tokens: 200
-    })
-  });
-  if (res.status === 401) throw new Error('key');
-  const json = await res.json();
-  const text = json.choices?.[0]?.message?.content || '';
-  return extractJSON(text);
-}
-
-async function callCustom(url, photoData, desc) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: photoData, description: desc || '' })
-  });
-  return await res.json();
 }
 
 // --- Notifications ---
@@ -1214,24 +1130,8 @@ function syncWeight() {
 
 function loadAISettings() {
   const cfg = getAIConfig();
-  if (cfg.provider) {
-    document.querySelectorAll('#ai-provider .quick-chip').forEach(c => {
-      c.classList.toggle('selected', c.dataset.val === cfg.provider);
-    });
-    if (cfg.provider === 'custom') {
-      document.getElementById('ai-key-section').style.display = 'none';
-      document.getElementById('ai-custom-section').style.display = '';
-      document.getElementById('ai-custom-url').value = cfg.key || '';
-    } else {
-      document.getElementById('ai-key-section').style.display = '';
-      document.getElementById('ai-custom-section').style.display = 'none';
-      document.getElementById('ai-api-key').value = cfg.key || '';
-      const hints = {
-        gemini: '前往 <span style="color:var(--accent);font-weight:600;">aistudio.google.com/apikey</span> 免费获取 Gemini API Key',
-        openai: '前往 <span style="color:var(--accent);font-weight:600;">platform.openai.com/api-keys</span> 获取 OpenAI API Key'
-      };
-      document.getElementById('ai-key-hint').innerHTML = hints[cfg.provider] || '';
-    }
+  if (cfg.url) {
+    document.getElementById('ai-custom-url').value = cfg.url;
   }
 }
 
@@ -1268,10 +1168,6 @@ function bindEvents() {
       state.inputMode = btn.dataset.mode;
       document.getElementById('mode-detailed').style.display = btn.dataset.mode === 'detailed' ? '' : 'none';
       document.getElementById('mode-quick').style.display = btn.dataset.mode === 'quick' ? '' : 'none';
-      if (btn.dataset.mode === 'quick') {
-        const cfg = getAIConfig();
-        document.getElementById('ai-no-config').style.display = (!cfg.provider || !cfg.key) ? '' : 'none';
-      }
     });
   });
 
@@ -1288,46 +1184,14 @@ function bindEvents() {
     if (w && w > 20) { state.bodyWeight = w; saveState(); syncWeight(); }
   });
 
-  // Settings: AI provider chips
-  setupChipGroup('ai-provider', v => {
-    const hints = {
-      gemini: '前往 <span style="color:var(--accent);font-weight:600;">aistudio.google.com/apikey</span> 免费获取 Gemini API Key',
-      openai: '前往 <span style="color:var(--accent);font-weight:600;">platform.openai.com/api-keys</span> 获取 OpenAI API Key',
-      custom: '填写你自己搭建的 AI 分析接口地址'
-    };
-    document.getElementById('ai-key-hint').innerHTML = hints[v] || '';
-    document.getElementById('ai-key-section').style.display = v === 'custom' ? 'none' : '';
-    document.getElementById('ai-custom-section').style.display = v === 'custom' ? '' : 'none';
-    if (v === 'custom') {
-      document.getElementById('ai-api-key').value = '';
-    } else {
-      document.getElementById('ai-custom-url').value = '';
-    }
-  });
-
+  // Settings: save custom AI URL
   document.getElementById('btn-save-ai').addEventListener('click', () => {
-    const chips = document.querySelectorAll('#ai-provider .quick-chip');
-    let provider = 'gemini';
-    chips.forEach(c => { if (c.classList.contains('selected')) provider = c.dataset.val; });
-    let key = '';
-    if (provider === 'custom') {
-      key = document.getElementById('ai-custom-url').value.trim();
-    } else {
-      key = document.getElementById('ai-api-key').value.trim();
-    }
-    if (!key) {
-      const el = document.getElementById('ai-save-status');
-      el.style.display = '';
-      el.style.color = 'var(--red)';
-      el.textContent = provider === 'custom' ? '请填写接口地址' : '请填写 API Key';
-      setTimeout(() => el.style.display = 'none', 2000);
-      return;
-    }
-    saveAIConfig({ provider, key });
+    const url = document.getElementById('ai-custom-url').value.trim();
+    saveAIConfig({ url });
     const el = document.getElementById('ai-save-status');
     el.style.display = '';
     el.style.color = 'var(--accent)';
-    el.textContent = '已保存';
+    el.textContent = url ? '已保存自定义接口' : '已恢复默认服务';
     setTimeout(() => el.style.display = 'none', 2000);
   });
 
