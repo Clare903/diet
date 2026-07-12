@@ -1,0 +1,1301 @@
+<title>断食追踪</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4A7C5E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #F0EDE7;
+    --bg-card: #FAFAF7;
+    --bg-card-alt: #F5F2EC;
+    --text: #2E2E2C;
+    --text-sub: #6B6B65;
+    --text-muted: #9C9C94;
+    --accent: #4A7C5E;
+    --accent-light: #6B9E7E;
+    --accent-bg: #E8F0EB;
+    --warm: #C08B5C;
+    --warm-bg: #F5EDE4;
+    --warm-light: #D4A87A;
+    --danger: #B85C4A;
+    --danger-bg: #F5E4E0;
+    --border: #DDD9D0;
+    --border-light: #EAE7E0;
+    --shadow: rgba(46,46,44,0.06);
+    --shadow-md: rgba(46,46,44,0.1);
+    --stage-digest: #8BA888;
+    --stage-postabs: #6B9E7E;
+    --stage-glycogen: #C8956C;
+    --stage-fatburn: #D4864A;
+    --stage-ketosis: #B85C4A;
+    --stage-autophagy: #8B4A6B;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #181C1A; --bg-card: #222826; --bg-card-alt: #2A302D;
+      --text: #E0DDD6; --text-sub: #A0A098; --text-muted: #6E6E66;
+      --accent: #6B9E7E; --accent-light: #8BBB9E; --accent-bg: #1E2E24;
+      --warm: #D4A87A; --warm-bg: #2E2518; --warm-light: #E0BF9A;
+      --danger: #D47A66; --danger-bg: #2E1E18;
+      --border: #333A36; --border-light: #2A302D;
+      --shadow: rgba(0,0,0,0.2); --shadow-md: rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #181C1A; --bg-card: #222826; --bg-card-alt: #2A302D;
+    --text: #E0DDD6; --text-sub: #A0A098; --text-muted: #6E6E66;
+    --accent: #6B9E7E; --accent-light: #8BBB9E; --accent-bg: #1E2E24;
+    --warm: #D4A87A; --warm-bg: #2E2518; --warm-light: #E0BF9A;
+    --danger: #D47A66; --danger-bg: #2E1E18;
+    --border: #333A36; --border-light: #2A302D;
+    --shadow: rgba(0,0,0,0.2); --shadow-md: rgba(0,0,0,0.3);
+  }
+  :root[data-theme="light"] {
+    --bg: #F0EDE7; --bg-card: #FAFAF7; --bg-card-alt: #F5F2EC;
+    --text: #2E2E2C; --text-sub: #6B6B65; --text-muted: #9C9C94;
+    --accent: #4A7C5E; --accent-light: #6B9E7E; --accent-bg: #E8F0EB;
+    --warm: #C08B5C; --warm-bg: #F5EDE4; --warm-light: #D4A87A;
+    --danger: #B85C4A; --danger-bg: #F5E4E0;
+    --border: #DDD9D0; --border-light: #EAE7E0;
+    --shadow: rgba(46,46,44,0.06); --shadow-md: rgba(46,46,44,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.5; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 20px 16px 100px; }
+
+  header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 24px; }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+
+  .tabs {
+    display: flex; gap: 2px; background: var(--bg-card-alt);
+    border-radius: var(--radius-sm); padding: 3px; border: 1px solid var(--border-light);
+  }
+  .tab {
+    padding: 6px 14px; font-size: 13px; font-weight: 500;
+    border: none; background: transparent; color: var(--text-muted);
+    cursor: pointer; border-radius: 6px; transition: all 0.2s;
+  }
+  .tab.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Timer */
+  .timer-ring-wrap { position: relative; width: 280px; height: 280px; margin: 20px auto 28px; }
+  .timer-ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--border-light); stroke-width: 6; }
+  .ring-progress {
+    fill: none; stroke: var(--accent); stroke-width: 6; stroke-linecap: round;
+    stroke-dasharray: 816; stroke-dashoffset: 816;
+    transition: stroke-dashoffset 1s ease, stroke 0.5s ease;
+  }
+  .timer-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .timer-digits {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 42px; font-weight: 300; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; color: var(--text);
+  }
+  .timer-label { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .current-stage-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 500; margin-top: 8px;
+  }
+  .current-stage-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* Stages */
+  .stages-timeline { margin: 0 0 24px; }
+  .stages-timeline h3 {
+    font-size: 13px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;
+  }
+  .stage-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; position: relative; }
+  .stage-item:not(:last-child)::after {
+    content: ''; position: absolute; left: 11px; top: 32px; bottom: -2px;
+    width: 2px; background: var(--border-light);
+  }
+  .stage-item.reached:not(:last-child)::after { background: var(--accent-light); }
+  .stage-dot {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-card); transition: all 0.3s;
+  }
+  .stage-item.reached .stage-dot { border-color: var(--accent); background: var(--accent); }
+  .stage-item.reached .stage-dot::after { content: '✓'; font-size: 12px; color: #fff; }
+  .stage-item.current .stage-dot { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-bg); }
+  .stage-item.current .stage-dot::after {
+    content: ''; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent); animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+  .stage-info { flex: 1; min-width: 0; }
+  .stage-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .stage-item:not(.reached):not(.current) .stage-name { color: var(--text-muted); }
+  .stage-time { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .stage-desc { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+  .stage-item:not(.reached):not(.current) .stage-desc { color: var(--text-muted); }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border-light);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+
+  /* Form */
+  .input-group { margin-bottom: 14px; }
+  .input-group label { display: block; font-size: 13px; font-weight: 500; color: var(--text-sub); margin-bottom: 6px; }
+  .input-group input, .input-group textarea, .input-group select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s;
+  }
+  .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
+  .input-group textarea { resize: vertical; min-height: 60px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 24px; border: none; border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
+    transition: all 0.2s; width: 100%;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-light); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger); }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--bg-card-alt); }
+  .btn-row { display: flex; gap: 10px; margin-top: 16px; }
+  .btn-row .btn { flex: 1; }
+
+  /* Mode toggle */
+  .mode-toggle {
+    display: flex; gap: 2px; background: var(--bg-card-alt);
+    border-radius: 6px; padding: 2px; margin-bottom: 16px; border: 1px solid var(--border-light);
+  }
+  .mode-btn {
+    flex: 1; padding: 8px 12px; font-size: 13px; font-weight: 500;
+    border: none; background: transparent; color: var(--text-muted);
+    cursor: pointer; border-radius: 5px; transition: all 0.2s; text-align: center;
+  }
+  .mode-btn.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px var(--shadow); }
+
+  /* Food search (detailed mode) */
+  .food-search-wrap { position: relative; margin-bottom: 12px; }
+  .food-search {
+    width: 100%; padding: 10px 12px 10px 34px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
+    font-size: 14px; font-family: inherit; outline: none;
+  }
+  .food-search:focus { border-color: var(--accent); }
+  .food-search-icon {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; color: var(--text-muted); pointer-events: none;
+  }
+  .food-dropdown {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); max-height: 240px; overflow-y: auto;
+    z-index: 20; box-shadow: 0 4px 12px var(--shadow-md); margin-top: 4px;
+  }
+  .food-dropdown.show { display: block; }
+  .food-option {
+    padding: 10px 12px; cursor: pointer; display: flex;
+    justify-content: space-between; align-items: center;
+    font-size: 14px; transition: background 0.1s;
+  }
+  .food-option:hover { background: var(--bg-card-alt); }
+  .food-option .meta { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .food-cat-label {
+    padding: 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; background: var(--bg-card-alt);
+    position: sticky; top: 0;
+  }
+
+  /* Added foods list */
+  .added-foods { margin-bottom: 14px; }
+  .added-food {
+    display: flex; align-items: center; gap: 8px; padding: 8px 0;
+    border-bottom: 1px solid var(--border-light); font-size: 14px;
+  }
+  .added-food:last-child { border-bottom: none; }
+  .added-food .name { flex: 1; }
+  .added-food .grams {
+    width: 64px; padding: 4px 8px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--bg); color: var(--text);
+    font-size: 13px; text-align: center; font-family: inherit; outline: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .added-food .grams:focus { border-color: var(--accent); }
+  .added-food .unit { font-size: 12px; color: var(--text-muted); }
+  .added-food .remove {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 16px; padding: 2px 6px; border-radius: 4px; line-height: 1;
+  }
+  .added-food .remove:hover { color: var(--danger); background: var(--danger-bg); }
+
+  /* Macro summary bar */
+  .macro-summary {
+    display: flex; gap: 12px; padding: 12px 14px;
+    background: var(--bg-card-alt); border-radius: var(--radius-sm);
+    margin-bottom: 14px; align-items: center;
+  }
+  .macro-item { text-align: center; flex: 1; }
+  .macro-val { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .macro-label { font-size: 11px; color: var(--text-muted); }
+  .macro-bar {
+    flex: 2; height: 8px; border-radius: 4px; overflow: hidden;
+    display: flex; background: var(--border-light);
+  }
+  .macro-bar span { height: 100%; transition: width 0.3s; }
+  .macro-bar .carb-bar { background: #D4864A; }
+  .macro-bar .protein-bar { background: #6B9E7E; }
+  .macro-bar .fat-bar { background: #C8956C; }
+
+  /* Quick mode sliders */
+  .quick-option { margin-bottom: 16px; }
+  .quick-option label { display: block; font-size: 13px; font-weight: 500; color: var(--text-sub); margin-bottom: 8px; }
+  .quick-chips { display: flex; gap: 6px; }
+  .quick-chip {
+    flex: 1; padding: 10px 6px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); background: var(--bg-card);
+    font-size: 13px; font-weight: 500; color: var(--text-sub);
+    cursor: pointer; transition: all 0.2s; text-align: center;
+  }
+  .quick-chip:hover { border-color: var(--accent-light); }
+  .quick-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .quick-chip .sub { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
+
+  /* Goal */
+  .goal-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .goal-chip {
+    padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 20px;
+    background: var(--bg-card); font-size: 13px; font-weight: 500;
+    color: var(--text-sub); cursor: pointer; transition: all 0.2s;
+  }
+  .goal-chip:hover { border-color: var(--accent-light); }
+  .goal-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+
+  /* Experience setting */
+  .exp-setting {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--bg-card-alt);
+    border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 13px;
+  }
+  .exp-setting label { color: var(--text-sub); font-weight: 500; white-space: nowrap; }
+  .exp-chips { display: flex; gap: 4px; flex: 1; }
+  .exp-chip {
+    flex: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--bg-card); font-size: 12px; color: var(--text-muted);
+    cursor: pointer; text-align: center; transition: all 0.15s; font-weight: 500;
+  }
+  .exp-chip.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+
+  /* History */
+  .history-item { padding: 14px 0; border-bottom: 1px solid var(--border-light); }
+  .history-item:last-child { border-bottom: none; }
+  .history-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .history-date { font-size: 13px; color: var(--text-muted); }
+  .history-duration { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .history-meal { font-size: 13px; color: var(--text-sub); margin-bottom: 4px; }
+  .history-stages { display: flex; gap: 4px; flex-wrap: wrap; }
+  .history-stage-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+  .history-feeling { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-style: italic; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-box { text-align: center; padding: 14px 8px; background: var(--bg-card-alt); border-radius: var(--radius-sm); }
+  .stat-val { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+  .delete-btn {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 12px; padding: 2px 6px; border-radius: 4px;
+  }
+  .delete-btn:hover { color: var(--danger); background: var(--danger-bg); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 100; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg-card); border-radius: var(--radius) var(--radius) 0 0;
+    padding: 24px 20px 40px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+  .feeling-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 16px; }
+  .feeling-btn {
+    padding: 10px 4px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--bg-card); cursor: pointer; text-align: center; transition: all 0.2s; font-size: 20px;
+  }
+  .feeling-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .feeling-btn span { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Exercise check-in */
+  .exercise-card { margin-bottom: 16px; }
+  .exercise-card h3 { display: flex; align-items: center; justify-content: space-between; }
+  .exercise-card h3 .boost {
+    font-size: 12px; font-weight: 500; color: var(--warm);
+    background: var(--warm-bg); padding: 3px 10px; border-radius: 12px;
+  }
+  .exercise-log { margin-bottom: 12px; }
+  .exercise-entry {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid var(--border-light); font-size: 13px;
+  }
+  .exercise-entry:last-child { border-bottom: none; }
+  .exercise-entry .ex-icon { font-size: 18px; }
+  .exercise-entry .ex-info { flex: 1; }
+  .exercise-entry .ex-name { font-weight: 500; }
+  .exercise-entry .ex-meta { font-size: 11px; color: var(--text-muted); }
+  .exercise-entry .ex-effect { font-size: 11px; color: var(--warm); font-weight: 500; }
+  .exercise-entry .remove {
+    background: none; border: none; color: var(--text-muted); cursor: pointer;
+    font-size: 14px; padding: 2px 6px; border-radius: 4px; line-height: 1;
+  }
+  .exercise-entry .remove:hover { color: var(--danger); background: var(--danger-bg); }
+  .exercise-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .ex-type-btn {
+    padding: 10px 6px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--bg-card); cursor: pointer; text-align: center; transition: all 0.2s;
+  }
+  .ex-type-btn:hover { border-color: var(--accent-light); background: var(--accent-bg); }
+  .ex-type-btn .ex-emoji { font-size: 20px; display: block; margin-bottom: 2px; }
+  .ex-type-btn .ex-label { font-size: 12px; font-weight: 500; color: var(--text); display: block; }
+  .ex-type-btn .ex-hint { font-size: 10px; color: var(--text-muted); display: block; }
+  .exercise-duration-row {
+    display: none; margin-top: 10px; align-items: center; gap: 8px;
+  }
+  .exercise-duration-row.show { display: flex; }
+  .exercise-duration-row label { font-size: 13px; color: var(--text-sub); white-space: nowrap; }
+  .exercise-duration-row input {
+    width: 70px; padding: 6px 10px; border: 1px solid var(--border);
+    border-radius: 6px; background: var(--bg); color: var(--text);
+    font-size: 14px; text-align: center; font-family: inherit; outline: none;
+  }
+  .exercise-duration-row input:focus { border-color: var(--accent); }
+  .exercise-duration-row .unit { font-size: 13px; color: var(--text-muted); }
+  .exercise-duration-row .btn { width: auto; padding: 6px 16px; font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,*::before,*::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+
+<div class="app">
+  <header>
+    <h1>断食追踪</h1>
+    <div class="tabs">
+      <button class="tab active" data-view="timer">追踪</button>
+      <button class="tab" data-view="history">记录</button>
+    </div>
+  </header>
+
+  <div class="view active" id="view-timer">
+    <!-- Idle -->
+    <div id="state-idle">
+      <div class="card">
+        <h3>记录上一餐</h3>
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="detailed">精确记录</button>
+          <button class="mode-btn" data-mode="quick">快速估算</button>
+        </div>
+
+        <!-- Detailed mode -->
+        <div id="mode-detailed">
+          <div class="food-search-wrap">
+            <span class="food-search-icon">🔍</span>
+            <input class="food-search" id="food-search" type="text" placeholder="搜索食物，如：米饭、鸡蛋、牛肉..." autocomplete="off">
+            <div class="food-dropdown" id="food-dropdown"></div>
+          </div>
+          <div class="added-foods" id="added-foods"></div>
+          <div class="macro-summary" id="macro-summary" style="display:none;">
+            <div class="macro-item">
+              <div class="macro-val" id="total-cal">0</div>
+              <div class="macro-label">千卡</div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-val" style="color:var(--stage-fatburn)" id="total-carb">0g</div>
+              <div class="macro-label">碳水</div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-val" style="color:var(--stage-postabs)" id="total-protein">0g</div>
+              <div class="macro-label">蛋白质</div>
+            </div>
+            <div class="macro-item">
+              <div class="macro-val" style="color:var(--stage-glycogen)" id="total-fat">0g</div>
+              <div class="macro-label">脂肪</div>
+            </div>
+          </div>
+          <div class="macro-bar" id="macro-bar" style="display:none;margin-bottom:14px;">
+            <span class="carb-bar"></span>
+            <span class="protein-bar"></span>
+            <span class="fat-bar"></span>
+          </div>
+        </div>
+
+        <!-- Quick mode -->
+        <div id="mode-quick" style="display:none;">
+          <div class="input-group">
+            <label>吃了什么（选填）</label>
+            <textarea id="meal-desc-quick" placeholder="简单描述，如：吃了碗面、一份盖饭..." style="min-height:50px;"></textarea>
+          </div>
+          <div class="quick-option">
+            <label>碳水多少</label>
+            <div class="quick-chips" id="carb-level">
+              <button class="quick-chip" data-val="very-low">很少<span class="sub">纯肉菜</span></button>
+              <button class="quick-chip" data-val="low">少量<span class="sub">小碗饭</span></button>
+              <button class="quick-chip selected" data-val="medium">中等<span class="sub">正常吃</span></button>
+              <button class="quick-chip" data-val="high">很多<span class="sub">大量主食</span></button>
+            </div>
+          </div>
+          <div class="quick-option">
+            <label>吃了多少</label>
+            <div class="quick-chips" id="portion-level">
+              <button class="quick-chip" data-val="light">少量<span class="sub">垫了垫</span></button>
+              <button class="quick-chip selected" data-val="normal">正常<span class="sub">七八分饱</span></button>
+              <button class="quick-chip" data-val="heavy">很饱<span class="sub">撑了</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="exp-setting">
+          <label>体重</label>
+          <div style="display:flex;align-items:center;gap:6px;flex:1;">
+            <input type="number" id="user-weight" placeholder="kg" step="0.1" min="30" max="200"
+              style="width:72px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;text-align:center;font-family:inherit;outline:none;">
+            <span style="font-size:12px;color:var(--text-muted);">kg</span>
+          </div>
+        </div>
+        <div class="exp-setting">
+          <label>断食经验</label>
+          <div class="exp-chips" id="exp-level">
+            <button class="exp-chip" data-val="beginner">新手</button>
+            <button class="exp-chip selected" data-val="intermediate">有经验</button>
+            <button class="exp-chip" data-val="experienced">老手</button>
+          </div>
+        </div>
+
+        <div class="input-group"><label>断食目标</label></div>
+        <div class="goal-chips">
+          <button class="goal-chip" data-hours="16">16h</button>
+          <button class="goal-chip selected" data-hours="18">18h</button>
+          <button class="goal-chip" data-hours="20">20h</button>
+          <button class="goal-chip" data-hours="24">24h</button>
+          <button class="goal-chip" data-hours="36">36h</button>
+          <button class="goal-chip" data-hours="48">48h</button>
+        </div>
+        <button class="btn btn-primary" id="btn-start">开始断食</button>
+      </div>
+    </div>
+
+    <!-- Fasting -->
+    <div id="state-fasting" style="display:none;">
+      <div class="timer-ring-wrap">
+        <svg viewBox="0 0 280 280">
+          <circle class="ring-bg" cx="140" cy="140" r="130"/>
+          <circle class="ring-progress" id="ring" cx="140" cy="140" r="130"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-digits" id="timer-digits">00:00:00</div>
+          <div class="timer-label" id="timer-goal-label">目标 18 小时</div>
+          <div class="current-stage-badge" id="current-stage-badge">
+            <span class="dot"></span>
+            <span class="name">消化中</span>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 16px;">
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px;">上一餐</div>
+        <div style="font-size:14px;" id="fasting-meal-info">—</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="fasting-macro-info"></div>
+      </div>
+      <div class="card exercise-card">
+        <h3>
+          <span>运动打卡</span>
+          <span class="boost" id="exercise-boost" style="display:none;">加速中</span>
+        </h3>
+        <div class="exercise-log" id="exercise-log"></div>
+        <div class="exercise-types" id="exercise-types">
+          <button class="ex-type-btn" data-type="walk"><span class="ex-emoji">🚶</span><span class="ex-label">散步</span></button>
+          <button class="ex-type-btn" data-type="yoga"><span class="ex-emoji">🧘</span><span class="ex-label">瑜伽</span></button>
+          <button class="ex-type-btn" data-type="cycle"><span class="ex-emoji">🚴</span><span class="ex-label">骑行</span></button>
+          <button class="ex-type-btn" data-type="run"><span class="ex-emoji">🏃</span><span class="ex-label">跑步</span></button>
+          <button class="ex-type-btn" data-type="swim"><span class="ex-emoji">🏊</span><span class="ex-label">游泳</span></button>
+          <button class="ex-type-btn" data-type="ball"><span class="ex-emoji">⚽</span><span class="ex-label">球类</span></button>
+          <button class="ex-type-btn" data-type="strength"><span class="ex-emoji">🏋️</span><span class="ex-label">力量</span></button>
+          <button class="ex-type-btn" data-type="hiit"><span class="ex-emoji">⚡</span><span class="ex-label">HIIT</span></button>
+          <button class="ex-type-btn" data-type="hike"><span class="ex-emoji">🥾</span><span class="ex-label">爬山</span></button>
+          <button class="ex-type-btn" data-type="dance"><span class="ex-emoji">💃</span><span class="ex-label">跳舞</span></button>
+          <button class="ex-type-btn" data-type="stretch"><span class="ex-emoji">🤸</span><span class="ex-label">拉伸</span></button>
+          <button class="ex-type-btn" data-type="chores"><span class="ex-emoji">🧹</span><span class="ex-label">家务</span></button>
+        </div>
+        <div class="exercise-duration-row" id="exercise-duration-row">
+          <label>时长</label>
+          <input type="number" id="exercise-minutes" value="30" min="5" max="180" step="5">
+          <span class="unit">分钟</span>
+          <button class="btn btn-primary" id="btn-add-exercise">记录</button>
+        </div>
+      </div>
+
+      <div class="stages-timeline">
+        <h3>断食阶段</h3>
+        <div id="stages-list"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-danger" id="btn-end">结束断食</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-history">
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-val" id="stat-total">0</div><div class="stat-label">总次数</div></div>
+      <div class="stat-box"><div class="stat-val" id="stat-avg">0h</div><div class="stat-label">平均时长</div></div>
+      <div class="stat-box"><div class="stat-val" id="stat-longest">0h</div><div class="stat-label">最长</div></div>
+    </div>
+    <div class="card">
+      <h3>断食历史</h3>
+      <div id="history-list">
+        <div class="empty-state"><div class="icon">🌙</div><p>还没有断食记录<br>开始你的第一次断食吧</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="end-modal">
+  <div class="modal">
+    <h3>结束断食</h3>
+    <div class="input-group"><label>你的感受</label></div>
+    <div class="feeling-grid">
+      <button class="feeling-btn" data-feeling="😫"><span>很差</span></button>
+      <button class="feeling-btn" data-feeling="😐"><span>一般</span></button>
+      <button class="feeling-btn" data-feeling="🙂"><span>还行</span></button>
+      <button class="feeling-btn" data-feeling="😊"><span>不错</span></button>
+      <button class="feeling-btn" data-feeling="🤩"><span>很棒</span></button>
+    </div>
+    <div class="input-group">
+      <label>体重 (kg，选填)</label>
+      <input type="number" id="end-weight" placeholder="例如 65.5" step="0.1">
+    </div>
+    <div class="input-group" style="margin-top:14px;">
+      <label>备注 (选填)</label>
+      <input type="text" id="end-note" placeholder="这次断食的感想...">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="btn-cancel-end">取消</button>
+      <button class="btn btn-primary" id="btn-confirm-end">确认结束</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FOOD_DB = [
+  { cat: '主食', items: [
+    { name: '白米饭', unit: '碗', defaultG: 150, carb: 26, protein: 2.5, fat: 0.3, cal: 130 },
+    { name: '面条(熟)', unit: '碗', defaultG: 200, carb: 25, protein: 4, fat: 1, cal: 130 },
+    { name: '馒头', unit: '个', defaultG: 100, carb: 47, protein: 7, fat: 1, cal: 230 },
+    { name: '面包', unit: '片', defaultG: 60, carb: 49, protein: 8, fat: 3, cal: 260 },
+    { name: '包子', unit: '个', defaultG: 80, carb: 30, protein: 7, fat: 6, cal: 200 },
+    { name: '饺子', unit: '份(10个)', defaultG: 200, carb: 22, protein: 8, fat: 5, cal: 165 },
+    { name: '炒饭', unit: '份', defaultG: 250, carb: 30, protein: 6, fat: 8, cal: 220 },
+    { name: '红薯', unit: '个', defaultG: 200, carb: 20, protein: 1.5, fat: 0.1, cal: 90 },
+    { name: '土豆', unit: '个', defaultG: 150, carb: 17, protein: 2, fat: 0.1, cal: 77 },
+    { name: '玉米', unit: '根', defaultG: 200, carb: 19, protein: 3.3, fat: 1.2, cal: 96 },
+    { name: '燕麦粥', unit: '碗', defaultG: 250, carb: 12, protein: 2.5, fat: 1.5, cal: 68 },
+    { name: '粥/稀饭', unit: '碗', defaultG: 300, carb: 10, protein: 1.5, fat: 0.2, cal: 46 },
+  ]},
+  { cat: '肉蛋', items: [
+    { name: '猪肉', unit: '份', defaultG: 100, carb: 0, protein: 20, fat: 14, cal: 200 },
+    { name: '牛肉', unit: '份', defaultG: 100, carb: 0, protein: 20, fat: 10, cal: 170 },
+    { name: '鸡胸肉', unit: '块', defaultG: 120, carb: 0, protein: 23, fat: 1, cal: 110 },
+    { name: '鸡腿', unit: '个', defaultG: 100, carb: 0, protein: 17, fat: 12, cal: 180 },
+    { name: '排骨', unit: '份', defaultG: 150, carb: 0, protein: 17, fat: 18, cal: 230 },
+    { name: '鱼肉', unit: '份', defaultG: 120, carb: 0, protein: 18, fat: 5, cal: 120 },
+    { name: '虾', unit: '份', defaultG: 100, carb: 0, protein: 18, fat: 1, cal: 85 },
+    { name: '鸡蛋', unit: '个', defaultG: 50, carb: 1, protein: 13, fat: 11, cal: 155 },
+    { name: '鸭肉', unit: '份', defaultG: 100, carb: 0, protein: 16, fat: 20, cal: 240 },
+  ]},
+  { cat: '蔬菜豆腐', items: [
+    { name: '炒青菜', unit: '份', defaultG: 150, carb: 3, protein: 1.5, fat: 3, cal: 40 },
+    { name: '西兰花', unit: '份', defaultG: 120, carb: 7, protein: 2.8, fat: 0.4, cal: 34 },
+    { name: '番茄', unit: '个', defaultG: 150, carb: 4, protein: 0.9, fat: 0.2, cal: 18 },
+    { name: '豆腐', unit: '块', defaultG: 150, carb: 2, protein: 8, fat: 4.8, cal: 76 },
+    { name: '豆腐干', unit: '份', defaultG: 80, carb: 5, protein: 17, fat: 4, cal: 120 },
+    { name: '黄瓜', unit: '根', defaultG: 200, carb: 3, protein: 0.7, fat: 0.1, cal: 16 },
+    { name: '沙拉', unit: '份', defaultG: 150, carb: 4, protein: 1.5, fat: 5, cal: 60 },
+  ]},
+  { cat: '汤/饮品', items: [
+    { name: '汤(清汤)', unit: '碗', defaultG: 300, carb: 2, protein: 2, fat: 1, cal: 25 },
+    { name: '汤(浓汤)', unit: '碗', defaultG: 300, carb: 5, protein: 4, fat: 5, cal: 70 },
+    { name: '牛奶', unit: '杯', defaultG: 250, carb: 5, protein: 3.3, fat: 3.3, cal: 60 },
+    { name: '酸奶', unit: '杯', defaultG: 200, carb: 10, protein: 3.5, fat: 3, cal: 80 },
+    { name: '豆浆', unit: '杯', defaultG: 300, carb: 3, protein: 3, fat: 1.5, cal: 35 },
+  ]},
+  { cat: '水果/零食', items: [
+    { name: '苹果', unit: '个', defaultG: 200, carb: 14, protein: 0.3, fat: 0.2, cal: 52 },
+    { name: '香蕉', unit: '根', defaultG: 120, carb: 23, protein: 1, fat: 0.3, cal: 89 },
+    { name: '橙子', unit: '个', defaultG: 180, carb: 12, protein: 0.9, fat: 0.1, cal: 47 },
+    { name: '葡萄', unit: '份', defaultG: 150, carb: 18, protein: 0.7, fat: 0.2, cal: 69 },
+    { name: '坚果', unit: '把', defaultG: 30, carb: 10, protein: 20, fat: 50, cal: 570 },
+    { name: '蛋糕', unit: '块', defaultG: 80, carb: 50, protein: 5, fat: 20, cal: 350 },
+    { name: '饼干', unit: '份', defaultG: 50, carb: 65, protein: 6, fat: 20, cal: 450 },
+  ]},
+];
+
+const CIRCUMFERENCE = 2 * Math.PI * 130;
+
+let state = {
+  fasting: false, startTime: null,
+  mealDesc: '', mealFoods: [], mealMacro: null,
+  goalHours: 18, experience: 'intermediate', bodyWeight: null,
+  quickCarb: 'medium', quickPortion: 'normal',
+  inputMode: 'detailed',
+  exercises: [],
+  history: []
+};
+
+let addedFoods = [];
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('fasting-tracker-v2');
+    if (s) state = { ...state, ...JSON.parse(s) };
+  } catch(e) {}
+}
+function saveState() { localStorage.setItem('fasting-tracker-v2', JSON.stringify(state)); }
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function calcMacroFromFoods(foods) {
+  let carb = 0, protein = 0, fat = 0, cal = 0;
+  foods.forEach(f => {
+    const ratio = f.grams / 100;
+    carb += f.carb * ratio;
+    protein += f.protein * ratio;
+    fat += f.fat * ratio;
+    cal += f.cal * ratio;
+  });
+  return { carb: Math.round(carb), protein: Math.round(protein), fat: Math.round(fat), cal: Math.round(cal) };
+}
+
+function calcMacroFromQuick(carbLevel, portionLevel) {
+  const carbMap = { 'very-low': 15, 'low': 50, 'medium': 100, 'high': 200 };
+  const portionCal = { 'light': 350, 'normal': 650, 'heavy': 1000 };
+  const carb = carbMap[carbLevel] || 100;
+  const cal = portionCal[portionLevel] || 650;
+  const carbCal = carb * 4;
+  const remaining = Math.max(cal - carbCal, 100);
+  const protein = Math.round(remaining * 0.45 / 4);
+  const fat = Math.round(remaining * 0.55 / 9);
+  return { carb, protein, fat, cal };
+}
+
+// Exercise database: MET values from Compendium of Physical Activities
+// carbRatio: fraction of energy from glycogen at this intensity
+// met: metabolic equivalent (kcal/kg/hr relative to rest)
+const EXERCISE_DB = {
+  walk:     { name: '散步',   icon: '🚶', met: 3.5, carbRatio: 0.35 },
+  yoga:     { name: '瑜伽',   icon: '🧘', met: 3.0, carbRatio: 0.30 },
+  cycle:    { name: '骑行',   icon: '🚴', met: 7.0, carbRatio: 0.55 },
+  run:      { name: '跑步',   icon: '🏃', met: 9.5, carbRatio: 0.70 },
+  swim:     { name: '游泳',   icon: '🏊', met: 7.0, carbRatio: 0.60 },
+  ball:     { name: '球类',   icon: '⚽', met: 7.0, carbRatio: 0.60 },
+  strength: { name: '力量训练', icon: '🏋️', met: 5.0, carbRatio: 0.70 },
+  hiit:     { name: 'HIIT',  icon: '⚡', met: 12.0, carbRatio: 0.85 },
+  hike:     { name: '爬山',   icon: '🥾', met: 6.0, carbRatio: 0.50 },
+  dance:    { name: '跳舞',   icon: '💃', met: 5.5, carbRatio: 0.50 },
+  stretch:  { name: '拉伸',   icon: '🤸', met: 2.5, carbRatio: 0.25 },
+  chores:   { name: '家务',   icon: '🧹', met: 3.5, carbRatio: 0.35 },
+};
+
+function getWeight() { return state.bodyWeight || 65; }
+// Liver glycogen capacity ~100g = 400kcal
+const GLYCOGEN_STORE_KCAL = 400;
+
+function calcExerciseGlycogenBurn(exercises) {
+  let totalGlycogenKcal = 0;
+  let totalCalBurned = 0;
+  (exercises || []).forEach(ex => {
+    const info = EXERCISE_DB[ex.type];
+    if (!info) return;
+    const hours = ex.minutes / 60;
+    const calBurned = info.met * getWeight() * hours;
+    const glycogenKcal = calBurned * info.carbRatio;
+    totalGlycogenKcal += glycogenKcal;
+    totalCalBurned += calBurned;
+  });
+  return { totalGlycogenKcal, totalCalBurned };
+}
+
+function calcStages(macro, experience, exercises) {
+  const carb = macro.carb;
+  const cal = macro.cal;
+  const startTime = state.startTime;
+
+  let carbFactor = 1;
+  if (carb < 20) carbFactor = 0.6;
+  else if (carb < 50) carbFactor = 0.75;
+  else if (carb < 100) carbFactor = 0.9;
+  else if (carb < 150) carbFactor = 1.0;
+  else if (carb < 250) carbFactor = 1.15;
+  else carbFactor = 1.3;
+
+  let portionShift = 0;
+  if (cal < 400) portionShift = -1;
+  else if (cal > 900) portionShift = 1.5;
+  else if (cal > 700) portionShift = 0.5;
+
+  let expFactor = 1;
+  if (experience === 'beginner') expFactor = 1.15;
+  else if (experience === 'experienced') expFactor = 0.85;
+
+  // Base stage hours (no exercise)
+  const baseHours = [
+    0,
+    Math.max(2, 3 + portionShift * 0.5),
+    7 * carbFactor + portionShift * 0.5,
+    12 * carbFactor + portionShift,
+    16 * carbFactor * expFactor + portionShift,
+    20 * carbFactor * expFactor + portionShift * 0.5,
+    30 * carbFactor * expFactor
+  ];
+
+  // Per-stage sensitivity to exercise:
+  //   digest (0): exercise mildly speeds gastric emptying (research: ~15-20% faster)
+  //   blood sugar (1): exercise accelerates glucose uptake by muscles
+  //   glycogen depletion (2,3): exercise directly burns glycogen — max effect
+  //   fat burning (4): already in fat-burning, exercise deepens it moderately
+  //   ketosis (5,6): diminishing returns — you're already there
+  const stageSensitivity = [0.15, 0.3, 0.9, 1.0, 0.6, 0.3, 0.15];
+
+  // Calculate glycogen burned by each exercise relative to when it happened
+  const stageBoosts = [0, 0, 0, 0, 0, 0, 0];
+  (exercises || []).forEach(ex => {
+    const info = EXERCISE_DB[ex.type];
+    if (!info || !startTime || !ex.time) return;
+    const exHour = (ex.time - startTime) / 3600000;
+    const hours = ex.minutes / 60;
+    const calBurned = info.met * getWeight() * hours;
+    const glycogenKcal = calBurned * info.carbRatio;
+    // Convert glycogen burned to hours of acceleration
+    // glycogenKcal / GLYCOGEN_STORE_KCAL = fraction of total store depleted
+    // Multiply by the glycogen-dependent phase duration (~12h baseline) to get hours saved
+    const glycogenPhaseDuration = baseHours[3] - baseHours[2];
+    const hoursSaved = (glycogenKcal / GLYCOGEN_STORE_KCAL) * glycogenPhaseDuration;
+
+    // Find which stage exercise occurred in
+    let exStageIdx = 0;
+    for (let i = baseHours.length - 1; i >= 0; i--) {
+      if (exHour >= baseHours[i]) { exStageIdx = i; break; }
+    }
+
+    // Apply boost to current and all later stages with decay
+    for (let j = exStageIdx; j < stageBoosts.length; j++) {
+      const distance = j - exStageIdx;
+      const decay = Math.max(0, 1 - distance * 0.15);
+      stageBoosts[j] += hoursSaved * stageSensitivity[j] * decay;
+    }
+  });
+
+  const minHours = [0, 1.5, 3, 5, 7, 10, 16];
+
+  const stages = [
+    { name: '消化吸收', desc: '身体正在消化食物，血糖上升中', color: 'var(--stage-digest)' },
+    { name: '血糖稳定', desc: '消化趋于完成，血糖回归正常', color: 'var(--stage-digest)' },
+    { name: '糖原消耗', desc: '胰岛素降低，开始消耗肝糖原储备', color: 'var(--stage-postabs)' },
+    { name: '糖原耗尽', desc: '糖原基本耗尽，身体寻找替代能源', color: 'var(--stage-glycogen)' },
+    { name: '脂肪燃烧', desc: '脂肪酸氧化加速，开始显著燃脂', color: 'var(--stage-fatburn)' },
+    { name: '初步酮症', desc: '酮体水平上升，进入轻度酮症状态', color: 'var(--stage-ketosis)' },
+    { name: '深度酮症', desc: '自噬激活，细胞进入深层修复模式', color: 'var(--stage-autophagy)' },
+  ];
+
+  for (let i = 0; i < stages.length; i++) {
+    const maxReduction = baseHours[i] * 0.45;
+    const boosted = baseHours[i] - Math.min(stageBoosts[i], maxReduction);
+    stages[i].hour = round1(Math.max(minHours[i], boosted));
+  }
+
+  for (let i = 1; i < stages.length; i++) {
+    if (stages[i].hour <= stages[i-1].hour) stages[i].hour = round1(stages[i-1].hour + 0.5);
+  }
+  return stages;
+}
+
+function round1(n) { return Math.round(n * 10) / 10; }
+
+function buildMealSummary() {
+  if (state.inputMode === 'detailed' && addedFoods.length > 0) {
+    const names = addedFoods.map(f => f.name + ' ' + f.grams + 'g').join('、');
+    const macro = calcMacroFromFoods(addedFoods);
+    return { desc: names, macro, foods: addedFoods.map(f => ({...f})) };
+  } else if (state.inputMode === 'quick') {
+    const desc = document.getElementById('meal-desc-quick').value.trim() || '快速记录';
+    const macro = calcMacroFromQuick(state.quickCarb, state.quickPortion);
+    return { desc, macro, foods: [] };
+  }
+  return null;
+}
+
+// --- UI ---
+
+function init() {
+  loadState();
+  bindEvents();
+  if (state.experience) {
+    document.querySelectorAll('#exp-level .exp-chip').forEach(c => {
+      c.classList.toggle('selected', c.dataset.val === state.experience);
+    });
+  }
+  if (state.bodyWeight) {
+    document.getElementById('user-weight').value = state.bodyWeight;
+  }
+  if (state.fasting) showFasting(); else showIdle();
+  renderHistory();
+}
+
+function bindEvents() {
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('view-' + tab.dataset.view).classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.inputMode = btn.dataset.mode;
+      document.getElementById('mode-detailed').style.display = btn.dataset.mode === 'detailed' ? '' : 'none';
+      document.getElementById('mode-quick').style.display = btn.dataset.mode === 'quick' ? '' : 'none';
+    });
+  });
+
+  // Food search
+  const searchInput = document.getElementById('food-search');
+  const dropdown = document.getElementById('food-dropdown');
+  searchInput.addEventListener('focus', () => renderFoodDropdown(searchInput.value));
+  searchInput.addEventListener('input', () => renderFoodDropdown(searchInput.value));
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.food-search-wrap')) dropdown.classList.remove('show');
+  });
+
+  // Quick mode chips
+  setupChipGroup('carb-level', v => { state.quickCarb = v; });
+  setupChipGroup('portion-level', v => { state.quickPortion = v; });
+  document.getElementById('user-weight').addEventListener('change', e => {
+    const w = parseFloat(e.target.value);
+    if (w && w > 20) { state.bodyWeight = w; saveState(); }
+  });
+  setupChipGroup('exp-level', v => { state.experience = v; saveState(); });
+
+  document.querySelectorAll('.goal-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.goal-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      state.goalHours = parseInt(chip.dataset.hours);
+    });
+  });
+
+  document.getElementById('btn-start').addEventListener('click', startFast);
+  document.getElementById('btn-end').addEventListener('click', () => document.getElementById('end-modal').classList.add('show'));
+  document.getElementById('btn-cancel-end').addEventListener('click', () => document.getElementById('end-modal').classList.remove('show'));
+  document.getElementById('btn-confirm-end').addEventListener('click', endFast);
+
+  document.querySelectorAll('.feeling-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.feeling-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // Exercise
+  let selectedExType = null;
+  document.querySelectorAll('.ex-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedExType = btn.dataset.type;
+      document.getElementById('exercise-duration-row').classList.add('show');
+      document.querySelectorAll('.ex-type-btn').forEach(b => b.style.borderColor = '');
+      btn.style.borderColor = 'var(--accent)';
+    });
+  });
+  document.getElementById('btn-add-exercise').addEventListener('click', () => {
+    if (!selectedExType) return;
+    const mins = parseInt(document.getElementById('exercise-minutes').value) || 30;
+    if (!state.exercises) state.exercises = [];
+    state.exercises.push({ type: selectedExType, minutes: mins, time: Date.now() });
+    saveState();
+    selectedExType = null;
+    document.getElementById('exercise-duration-row').classList.remove('show');
+    document.querySelectorAll('.ex-type-btn').forEach(b => b.style.borderColor = '');
+    renderExerciseLog();
+    updateTimer();
+  });
+}
+
+function setupChipGroup(id, onChange) {
+  document.querySelectorAll('#' + id + ' .quick-chip, #' + id + ' .exp-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.parentElement.querySelectorAll('.quick-chip, .exp-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      onChange(chip.dataset.val);
+    });
+  });
+}
+
+function renderFoodDropdown(query) {
+  const dropdown = document.getElementById('food-dropdown');
+  const q = query.trim().toLowerCase();
+  let html = '';
+  FOOD_DB.forEach(cat => {
+    const filtered = q ? cat.items.filter(f => f.name.includes(q)) : cat.items;
+    if (filtered.length === 0) return;
+    html += `<div class="food-cat-label">${cat.cat}</div>`;
+    filtered.forEach((f, fi) => {
+      const idx = FOOD_DB.indexOf(cat);
+      const itemIdx = cat.items.indexOf(f);
+      html += `<div class="food-option" data-cat="${idx}" data-item="${itemIdx}">
+        <span>${f.name} <span style="color:var(--text-muted);font-size:12px;">(${f.defaultG}g/${f.unit})</span></span>
+        <span class="meta">碳${f.carb} 蛋${f.protein} 脂${f.fat}/100g</span>
+      </div>`;
+    });
+  });
+  if (!html) html = '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:13px;">没找到，试试其他关键词</div>';
+  dropdown.innerHTML = html;
+  dropdown.classList.add('show');
+
+  dropdown.querySelectorAll('.food-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const cat = FOOD_DB[opt.dataset.cat];
+      const item = cat.items[opt.dataset.item];
+      addedFoods.push({ ...item, grams: item.defaultG });
+      renderAddedFoods();
+      document.getElementById('food-search').value = '';
+      dropdown.classList.remove('show');
+    });
+  });
+}
+
+function renderAddedFoods() {
+  const container = document.getElementById('added-foods');
+  if (addedFoods.length === 0) {
+    container.innerHTML = '';
+    document.getElementById('macro-summary').style.display = 'none';
+    document.getElementById('macro-bar').style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = addedFoods.map((f, i) => `
+    <div class="added-food">
+      <span class="name">${f.name}</span>
+      <input class="grams" type="number" value="${f.grams}" min="1" data-idx="${i}" aria-label="克重">
+      <span class="unit">g</span>
+      <button class="remove" data-idx="${i}">×</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.grams').forEach(input => {
+    input.addEventListener('input', () => {
+      addedFoods[input.dataset.idx].grams = parseInt(input.value) || 0;
+      updateMacroSummary();
+    });
+  });
+  container.querySelectorAll('.remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      addedFoods.splice(parseInt(btn.dataset.idx), 1);
+      renderAddedFoods();
+    });
+  });
+
+  updateMacroSummary();
+}
+
+function updateMacroSummary() {
+  const macro = calcMacroFromFoods(addedFoods);
+  document.getElementById('macro-summary').style.display = addedFoods.length ? 'flex' : 'none';
+  document.getElementById('macro-bar').style.display = addedFoods.length ? 'flex' : 'none';
+  document.getElementById('total-cal').textContent = macro.cal;
+  document.getElementById('total-carb').textContent = macro.carb + 'g';
+  document.getElementById('total-protein').textContent = macro.protein + 'g';
+  document.getElementById('total-fat').textContent = macro.fat + 'g';
+
+  const total = macro.carb + macro.protein + macro.fat || 1;
+  document.querySelector('.carb-bar').style.width = (macro.carb / total * 100) + '%';
+  document.querySelector('.protein-bar').style.width = (macro.protein / total * 100) + '%';
+  document.querySelector('.fat-bar').style.width = (macro.fat / total * 100) + '%';
+}
+
+function startFast() {
+  const meal = buildMealSummary();
+  if (!meal) {
+    if (state.inputMode === 'detailed') {
+      document.getElementById('food-search').style.borderColor = 'var(--danger)';
+      setTimeout(() => document.getElementById('food-search').style.borderColor = '', 800);
+    }
+    return;
+  }
+  state.fasting = true;
+  state.startTime = Date.now();
+  state.mealDesc = meal.desc;
+  state.mealFoods = meal.foods;
+  state.mealMacro = meal.macro;
+  state.exercises = [];
+  saveState();
+  showFasting();
+}
+
+function showIdle() {
+  document.getElementById('state-idle').style.display = '';
+  document.getElementById('state-fasting').style.display = 'none';
+  addedFoods = [];
+  renderAddedFoods();
+}
+
+function renderExerciseLog() {
+  const log = document.getElementById('exercise-log');
+  const boost = document.getElementById('exercise-boost');
+  const exercises = state.exercises || [];
+  if (exercises.length === 0) {
+    log.innerHTML = '';
+    boost.style.display = 'none';
+    return;
+  }
+
+  const stageNames = ['消化期', '血糖期', '糖原消耗期', '糖原耗尽期', '燃脂期', '酮症期', '深度酮症期'];
+  const stageEffectLabel = ['加速消化', '加速血糖消耗', '大量消耗糖原', '加速燃脂切换', '加深燃脂', '维持酮症', '加深自噬'];
+
+  const macro = state.mealMacro || { carb: 100, cal: 650 };
+  const noExStages = calcStages(macro, state.experience, []);
+  const withExStages = calcStages(macro, state.experience, exercises);
+
+  const fatBurnIdx = 4;
+  const totalSaved = Math.max(0, noExStages[fatBurnIdx].hour - withExStages[fatBurnIdx].hour);
+  const { totalGlycogenKcal, totalCalBurned } = calcExerciseGlycogenBurn(exercises);
+  const glycogenPct = Math.min(100, Math.round(totalGlycogenKcal / GLYCOGEN_STORE_KCAL * 100));
+
+  boost.style.display = '';
+  boost.textContent = totalSaved > 0 ? ('燃脂提前 ~' + totalSaved.toFixed(1) + 'h') : '已记录';
+
+  log.innerHTML = exercises.map((ex, i) => {
+    const info = EXERCISE_DB[ex.type] || { name: ex.type, icon: '🏃', met: 5, carbRatio: 0.5 };
+    const t = new Date(ex.time);
+    const exHour = state.startTime ? (ex.time - state.startTime) / 3600000 : 0;
+    const hours = ex.minutes / 60;
+    const calBurned = Math.round(info.met * getWeight() * hours);
+    const glycogenG = Math.round(calBurned * info.carbRatio / 4);
+
+    let exStageIdx = 0;
+    for (let j = noExStages.length - 1; j >= 0; j--) {
+      if (exHour >= noExStages[j].hour) { exStageIdx = j; break; }
+    }
+
+    return `<div class="exercise-entry">
+      <span class="ex-icon">${info.icon}</span>
+      <div class="ex-info">
+        <div class="ex-name">${info.name} · ${ex.minutes}分钟</div>
+        <div class="ex-meta">${pad(t.getHours())}:${pad(t.getMinutes())} · ${stageNames[exStageIdx]} · ${stageEffectLabel[exStageIdx]}</div>
+        <div class="ex-meta">消耗 ${calBurned}kcal · 其中糖原 ~${glycogenG}g</div>
+      </div>
+      <button class="remove" data-idx="${i}" onclick="removeExercise(${i})">×</button>
+    </div>`;
+  }).join('');
+
+  if (exercises.length > 0) {
+    log.innerHTML += `<div style="font-size:11px;color:var(--text-muted);padding:6px 0 2px;border-top:1px solid var(--border-light);margin-top:4px;">
+      总消耗 ${Math.round(totalCalBurned)}kcal · 糖原消耗 ${glycogenPct}% (${Math.round(totalGlycogenKcal/4)}g / ~100g储备)
+    </div>`;
+  }
+}
+
+function removeExercise(idx) {
+  state.exercises.splice(idx, 1);
+  saveState();
+  renderExerciseLog();
+  updateTimer();
+}
+
+function showFasting() {
+  document.getElementById('state-idle').style.display = 'none';
+  document.getElementById('state-fasting').style.display = '';
+  document.getElementById('fasting-meal-info').textContent = state.mealDesc;
+  const m = state.mealMacro;
+  if (m) {
+    document.getElementById('fasting-macro-info').textContent =
+      `${m.cal}千卡 · 碳水${m.carb}g · 蛋白质${m.protein}g · 脂肪${m.fat}g`;
+  }
+  document.getElementById('timer-goal-label').textContent = '目标 ' + state.goalHours + ' 小时';
+  renderExerciseLog();
+  updateTimer();
+  if (window._timerInterval) clearInterval(window._timerInterval);
+  window._timerInterval = setInterval(updateTimer, 1000);
+}
+
+function updateTimer() {
+  if (!state.fasting) return;
+  const elapsed = Date.now() - state.startTime;
+  const hours = Math.floor(elapsed / 3600000);
+  const mins = Math.floor((elapsed % 3600000) / 60000);
+  const secs = Math.floor((elapsed % 60000) / 1000);
+  document.getElementById('timer-digits').textContent = pad(hours) + ':' + pad(mins) + ':' + pad(secs);
+
+  const goalMs = state.goalHours * 3600000;
+  const progress = Math.min(elapsed / goalMs, 1);
+  const ring = document.getElementById('ring');
+  ring.style.strokeDasharray = CIRCUMFERENCE;
+  ring.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+
+  const elapsedH = elapsed / 3600000;
+  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.experience, state.exercises);
+  let currentStage = stages[0];
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if (elapsedH >= stages[i].hour) { currentStage = stages[i]; break; }
+  }
+
+  const badge = document.getElementById('current-stage-badge');
+  badge.querySelector('.dot').style.background = currentStage.color;
+  badge.querySelector('.name').textContent = currentStage.name;
+  badge.style.background = currentStage.color + '18';
+  badge.style.color = currentStage.color;
+  ring.style.stroke = progress >= 1 ? 'var(--warm)' : 'var(--accent)';
+
+  renderStages(stages, elapsedH);
+}
+
+function renderStages(stages, elapsed) {
+  const list = document.getElementById('stages-list');
+  list.innerHTML = stages.map((s, i) => {
+    const reached = elapsed >= s.hour;
+    const current = reached && (i === stages.length - 1 || elapsed < stages[i + 1].hour);
+    let timeLabel = s.hour + 'h';
+    if (current) {
+      const next = stages[i + 1];
+      if (next) {
+        const remaining = next.hour - elapsed;
+        if (remaining > 0) {
+          const rh = Math.floor(remaining);
+          const rm = Math.floor((remaining - rh) * 60);
+          timeLabel = s.hour + 'h — 距下一阶段 ' + rh + 'h' + (rm > 0 ? pad(rm) + 'm' : '');
+        }
+      } else {
+        timeLabel = s.hour + 'h+ — 持续中';
+      }
+    }
+    const dotStyle = (reached || current)
+      ? `border-color:${s.color};${reached && !current ? 'background:' + s.color : ''}${current ? ';box-shadow:0 0 0 4px ' + s.color + '22' : ''}`
+      : '';
+    return `<div class="stage-item ${reached ? 'reached' : ''} ${current ? 'current' : ''}">
+      <div class="stage-dot" style="${dotStyle}"></div>
+      <div class="stage-info">
+        <div class="stage-name">${s.name}</div>
+        <div class="stage-time">${timeLabel}</div>
+        <div class="stage-desc">${s.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function endFast() {
+  const feeling = document.querySelector('.feeling-btn.selected')?.dataset.feeling || '';
+  const weight = document.getElementById('end-weight').value;
+  const note = document.getElementById('end-note').value;
+  const elapsed = Date.now() - state.startTime;
+  const elapsedH = elapsed / 3600000;
+  const stages = calcStages(state.mealMacro || { carb: 100, cal: 650 }, state.experience, state.exercises);
+  const reachedStages = stages.filter(s => elapsedH >= s.hour).map(s => s.name);
+
+  state.history.unshift({
+    date: state.startTime, endDate: Date.now(), duration: elapsed,
+    mealDesc: state.mealDesc, mealMacro: state.mealMacro,
+    exercises: state.exercises || [],
+    goalHours: state.goalHours, feeling,
+    weight: weight ? parseFloat(weight) : null, note, reachedStages
+  });
+
+  if (weight) { state.bodyWeight = parseFloat(weight); }
+  state.fasting = false; state.startTime = null;
+  state.mealMacro = null; state.mealFoods = [];
+  state.exercises = [];
+  saveState();
+
+  document.getElementById('end-modal').classList.remove('show');
+  document.querySelectorAll('.feeling-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('end-weight').value = '';
+  document.getElementById('end-note').value = '';
+  if (window._timerInterval) clearInterval(window._timerInterval);
+  showIdle();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (state.history.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">🌙</div><p>还没有断食记录<br>开始你的第一次断食吧</p></div>';
+    document.getElementById('stat-total').textContent = '0';
+    document.getElementById('stat-avg').textContent = '0h';
+    document.getElementById('stat-longest').textContent = '0h';
+    return;
+  }
+  const total = state.history.length;
+  const avgMs = state.history.reduce((a, r) => a + r.duration, 0) / total;
+  const longest = Math.max(...state.history.map(r => r.duration));
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-avg').textContent = (avgMs / 3600000).toFixed(1) + 'h';
+  document.getElementById('stat-longest').textContent = (longest / 3600000).toFixed(1) + 'h';
+
+  const stageColors = {
+    '消化吸收':'var(--stage-digest)','血糖稳定':'var(--stage-digest)',
+    '糖原消耗':'var(--stage-postabs)','糖原耗尽':'var(--stage-glycogen)',
+    '脂肪燃烧':'var(--stage-fatburn)','初步酮症':'var(--stage-ketosis)','深度酮症':'var(--stage-autophagy)',
+  };
+
+  list.innerHTML = state.history.map((r, idx) => {
+    const d = new Date(r.date);
+    const dH = (r.duration / 3600000).toFixed(1);
+    const tags = (r.reachedStages || []).map(s =>
+      `<span class="history-stage-tag" style="background:${stageColors[s]||'var(--stage-digest)'}18;color:${stageColors[s]||'var(--stage-digest)'}">${s}</span>`
+    ).join('');
+    const macroText = r.mealMacro ? ` · ${r.mealMacro.cal}kcal 碳${r.mealMacro.carb}g` : '';
+    return `<div class="history-item">
+      <div class="history-top">
+        <div>
+          <div class="history-date">${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}${macroText}</div>
+          <div class="history-meal">${r.mealDesc}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="history-duration">${dH}h</div>
+          <button class="delete-btn" onclick="deleteRecord(${idx})">✕</button>
+        </div>
+      </div>
+      <div class="history-stages">${tags}</div>
+      ${r.feeling||r.weight||r.note ? `<div class="history-feeling">${r.feeling||''} ${r.weight?r.weight+'kg':''} ${r.note||''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function deleteRecord(idx) { state.history.splice(idx, 1); saveState(); renderHistory(); }
+
+init();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
