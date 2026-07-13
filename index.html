@@ -1474,13 +1474,7 @@ function updateMacroSummary() {
 function startFast() {
   const meal = buildMealSummary();
   if (!meal) {
-    if (state.inputMode === 'detailed') {
-      const s = document.getElementById('food-search');
-      s.style.boxShadow = '0 0 0 3px rgba(255,59,48,0.3)';
-      setTimeout(() => s.style.boxShadow = '', 800);
-    } else if (state.inputMode === 'quick') {
-      alert(state._photos?.length ? '请等待 AI 分析完成' : '请先拍照或从相册选择食物照片');
-    }
+    alert('调试: meal为空, inputMode=' + state.inputMode + ', aiMacro=' + JSON.stringify(state._aiMacro) + ', foods=' + addedFoods.length);
     return;
   }
   state.fasting = true;
