@@ -1,4 +1,4 @@
-const CACHE = 'fasting-v8';
+const CACHE = 'fasting-v9';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png'];
 
 self.addEventListener('install', e => {

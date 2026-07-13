@@ -584,16 +584,19 @@
         <!-- AI photo mode -->
         <div id="mode-quick" style="display:none;">
           <div style="position:relative;margin-bottom:14px;">
-            <input type="file" id="meal-photo" accept="image/*" capture="environment"
-              style="display:none;">
-            <div id="photo-preview" style="display:none;margin-bottom:12px;border-radius:var(--radius-sm);overflow:hidden;position:relative;">
-              <img id="photo-img" style="width:100%;display:block;">
-              <button id="photo-remove" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+            <input type="file" id="meal-photo-camera" accept="image/*" capture="environment" style="display:none;">
+            <input type="file" id="meal-photo-album" accept="image/*" multiple style="display:none;">
+            <div id="photo-previews" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:8px;">
+              <button id="btn-take-photo" style="flex:1;padding:24px 12px;border:2px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:inherit;color:var(--text-sub);font-size:13px;-webkit-tap-highlight-color:transparent;">
+                <span style="display:block;font-size:24px;margin-bottom:4px;">📷</span>
+                拍照
+              </button>
+              <button id="btn-pick-album" style="flex:1;padding:24px 12px;border:2px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:inherit;color:var(--text-sub);font-size:13px;-webkit-tap-highlight-color:transparent;">
+                <span style="display:block;font-size:24px;margin-bottom:4px;">🖼️</span>
+                从相册选择
+              </button>
             </div>
-            <button id="btn-take-photo" style="width:100%;padding:32px 16px;border:2px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;text-align:center;font-family:inherit;color:var(--text-sub);font-size:14px;-webkit-tap-highlight-color:transparent;">
-              <span style="display:block;font-size:28px;margin-bottom:6px;">📷</span>
-              拍照或选择图片
-            </button>
           </div>
           <div class="input-group">
             <label>补充描述（选填）</label>
@@ -1022,34 +1025,44 @@ function getAIConfig() {
 function saveAIConfig(cfg) { localStorage.setItem('fasting-ai-config', JSON.stringify(cfg)); }
 
 async function analyzePhoto() {
-  const desc = document.getElementById('meal-desc-quick').value.trim();
-  const photoData = state._photoData;
-  if (!photoData) return;
+  const photos = state._photos || [];
+  if (!photos.length) return;
 
+  const desc = document.getElementById('meal-desc-quick').value.trim();
   document.getElementById('ai-loading').style.display = '';
   document.getElementById('ai-result').style.display = 'none';
 
   try {
     const cfg = getAIConfig();
     const url = (cfg.url && cfg.url.trim()) || DEFAULT_AI_URL;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: photoData, description: desc || '' })
-    });
-    if (!res.ok) throw new Error('api');
-    const data = await res.json();
+    const results = await Promise.all(photos.map(photo =>
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: photo, description: desc || '' })
+      }).then(r => r.ok ? r.json() : null).catch(() => null)
+    ));
 
-    if (data && data.cal !== undefined) {
-      state._aiMacro = { carb: data.carb, protein: data.protein, fat: data.fat, cal: data.cal };
-      state._aiDesc = data.description || desc || '拍照识别';
-      document.getElementById('ai-result').style.display = '';
-      document.getElementById('ai-result-content').innerHTML =
-        `<strong>${state._aiDesc}</strong><br>` +
-        `${data.cal}千卡 · 碳水${data.carb}g · 蛋白质${data.protein}g · 脂肪${data.fat}g`;
-    } else {
-      throw new Error('parse');
+    const valid = results.filter(d => d && d.cal !== undefined);
+    if (!valid.length) throw new Error('parse');
+
+    const total = { cal: 0, carb: 0, protein: 0, fat: 0 };
+    const descs = [];
+    valid.forEach(d => {
+      total.cal += d.cal; total.carb += d.carb;
+      total.protein += d.protein; total.fat += d.fat;
+      if (d.description) descs.push(d.description);
+    });
+
+    state._aiMacro = total;
+    state._aiDesc = descs.join('、') || desc || '拍照识别';
+    document.getElementById('ai-result').style.display = '';
+    let html = `<strong>${state._aiDesc}</strong><br>` +
+      `${total.cal}千卡 · 碳水${total.carb}g · 蛋白质${total.protein}g · 脂肪${total.fat}g`;
+    if (valid.length > 1) {
+      html += `<div style="margin-top:8px;font-size:12px;color:var(--text-muted);">共 ${valid.length} 张照片合计</div>`;
     }
+    document.getElementById('ai-result-content').innerHTML = html;
   } catch(e) {
     document.getElementById('ai-result').style.display = '';
     document.getElementById('ai-result-content').innerHTML =
@@ -1234,29 +1247,55 @@ function bindEvents() {
   document.getElementById('btn-exit-eating').addEventListener('click', exitEating);
 
   // Photo upload
+  state._photos = [];
+
+  function addPhotos(files) {
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        state._photos.push(ev.target.result);
+        state._photoData = state._photos[0];
+        renderPhotoPreviews();
+        analyzePhoto();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPhotoPreviews() {
+    const container = document.getElementById('photo-previews');
+    container.innerHTML = state._photos.map((src, i) => `
+      <div style="position:relative;width:calc(50% - 4px);border-radius:var(--radius-sm);overflow:hidden;">
+        <img src="${src}" style="width:100%;display:block;">
+        <button class="photo-remove-btn" data-idx="${i}" style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+      </div>
+    `).join('');
+    container.querySelectorAll('.photo-remove-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state._photos.splice(parseInt(btn.dataset.idx), 1);
+        state._photoData = state._photos[0] || null;
+        if (!state._photos.length) {
+          state._aiMacro = null;
+          document.getElementById('ai-result').style.display = 'none';
+        }
+        renderPhotoPreviews();
+      });
+    });
+  }
+
   document.getElementById('btn-take-photo').addEventListener('click', () => {
-    document.getElementById('meal-photo').click();
+    document.getElementById('meal-photo-camera').click();
   });
-  document.getElementById('meal-photo').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      state._photoData = ev.target.result;
-      document.getElementById('photo-img').src = ev.target.result;
-      document.getElementById('photo-preview').style.display = '';
-      document.getElementById('btn-take-photo').style.display = 'none';
-      analyzePhoto();
-    };
-    reader.readAsDataURL(file);
+  document.getElementById('btn-pick-album').addEventListener('click', () => {
+    document.getElementById('meal-photo-album').click();
   });
-  document.getElementById('photo-remove').addEventListener('click', () => {
-    state._photoData = null;
-    state._aiMacro = null;
-    document.getElementById('photo-preview').style.display = 'none';
-    document.getElementById('btn-take-photo').style.display = '';
-    document.getElementById('ai-result').style.display = 'none';
-    document.getElementById('meal-photo').value = '';
+  document.getElementById('meal-photo-camera').addEventListener('change', e => {
+    if (e.target.files.length) addPhotos(e.target.files);
+    e.target.value = '';
+  });
+  document.getElementById('meal-photo-album').addEventListener('change', e => {
+    if (e.target.files.length) addPhotos(e.target.files);
+    e.target.value = '';
   });
 
   document.querySelectorAll('.feeling-btn').forEach(btn => {
@@ -1452,6 +1491,12 @@ function showIdle() {
   document.getElementById('state-idle').style.display = '';
   addedFoods = [];
   renderAddedFoods();
+  state._photos = [];
+  state._photoData = null;
+  state._aiMacro = null;
+  state._aiDesc = null;
+  document.getElementById('photo-previews').innerHTML = '';
+  document.getElementById('ai-result').style.display = 'none';
 }
 
 function renderExerciseLog() {
