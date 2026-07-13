@@ -1,7 +1,9 @@
-const IMAGE_PROMPT = `Analyze this food photo and estimate the overall nutritional content. User note: "{DESC}"
+const IMAGE_PROMPT = `看这张食物照片，估算照片中所有食物的总热量和营养成分。
+用户补充说明："{DESC}"
+请参考用户的补充说明来辅助判断食物种类、份量和烹饪方式。
 
-Return ONLY a JSON object, no other text:
-{"description":"brief food description in Chinese","cal":integer_kcal,"carb":integer_grams_carbs,"protein":integer_grams_protein,"fat":integer_grams_fat}`;
+只返回一个 JSON，不要其他文字：
+{"description":"用中文简短描述食物","cal":总热量整数千卡,"carb":碳水整数克,"protein":蛋白质整数克,"fat":脂肪整数克}`;
 
 const FOOD_PROMPT = `Tell me the nutritional content of "{FOOD}" per 100 grams.
 
@@ -84,7 +86,12 @@ async function handleImageAnalysis(env, body) {
   const match = text.match(/\{[\s\S]*?\}/);
   if (!match) return json({ error: 'parse failed', raw: text }, 500);
 
-  return json(JSON.parse(match[0]));
+  const parsed = JSON.parse(match[0]);
+  parsed.cal = Math.round(parsed.cal || 0);
+  parsed.carb = Math.round(parsed.carb || 0);
+  parsed.protein = Math.round(parsed.protein || 0);
+  parsed.fat = Math.round(parsed.fat || 0);
+  return json(parsed);
 }
 
 function json(data, status = 200) {
