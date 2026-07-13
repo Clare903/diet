@@ -1054,7 +1054,7 @@ async function analyzePhoto() {
     valid.forEach(d => {
       total.cal += d.cal; total.carb += d.carb;
       total.protein += d.protein; total.fat += d.fat;
-      if (d.description) descs.push(d.description);
+      if (d.description && !descs.includes(d.description)) descs.push(d.description);
     });
 
     state._aiMacro = total;
@@ -1477,6 +1477,8 @@ function startFast() {
       const s = document.getElementById('food-search');
       s.style.boxShadow = '0 0 0 3px rgba(255,59,48,0.3)';
       setTimeout(() => s.style.boxShadow = '', 800);
+    } else if (state.inputMode === 'quick') {
+      alert(state._photos?.length ? '请等待 AI 分析完成' : '请先拍照或从相册选择食物照片');
     }
     return;
   }

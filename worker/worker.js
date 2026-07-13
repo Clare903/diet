@@ -1,9 +1,11 @@
-const IMAGE_PROMPT = `看这张食物照片，估算照片中所有食物的总热量和营养成分。
+const IMAGE_PROMPT = `看这张食物照片，估算所有食物的总热量和营养成分。
 用户补充说明："{DESC}"
-请参考用户的补充说明来辅助判断食物种类、份量和烹饪方式。
+只返回JSON：{"description":"简短中文食物名","cal":千卡整数,"carb":碳水克数,"protein":蛋白质克数,"fat":脂肪克数}`;
 
-只返回一个 JSON，不要其他文字：
-{"description":"用中文简短描述食物","cal":总热量整数千卡,"carb":碳水整数克,"protein":蛋白质整数克,"fat":脂肪整数克}`;
+const IMAGE_PROMPT_EN = `Identify food in this photo. User note: "{DESC}".
+Return ONLY JSON: {"description":"2-6字中文食物名","cal":kcal_int,"carb":grams_int,"protein":grams_int,"fat":grams_int}
+Example: {"description":"冰拿铁","cal":150,"carb":15,"protein":5,"fat":7}
+NO other text.`;
 
 const FOOD_PROMPT = `Tell me the nutritional content of "{FOOD}" per 100 grams.
 
@@ -74,23 +76,83 @@ async function handleImageAnalysis(env, body) {
   base64 = base64.replace(/\s/g, '');
   const pad = base64.length % 4;
   if (pad) base64 += '='.repeat(4 - pad);
-  const imageBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-  const prompt = IMAGE_PROMPT.replace('{DESC}', description || 'none');
 
-  const result = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
-    messages: [{ role: 'user', content: prompt }],
-    image: [...imageBytes],
+  const mimeMatch = image.match(/^data:(image\/\w+);/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+
+  if (env.CLAUDE_KEY) {
+    return await analyzeWithClaude(env, base64, mimeType, description);
+  }
+  return await analyzeWithCfAI(env, base64, mimeType, description);
+}
+
+async function analyzeWithClaude(env, base64, mimeType, description) {
+  const prompt = IMAGE_PROMPT.replace('{DESC}', description || '无');
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.CLAUDE_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    }),
   });
 
-  const text = result.response || result.description || JSON.stringify(result);
+  if (!resp.ok) {
+    const err = await resp.text();
+    return json({ error: 'Claude API error', status: resp.status, detail: err }, 500);
+  }
+
+  const result = await resp.json();
+  const text = result.content?.[0]?.text || '';
+  return parseResult(text, description);
+}
+
+async function analyzeWithCfAI(env, base64, mimeType, description) {
+  const prompt = IMAGE_PROMPT_EN.replace('{DESC}', description || 'none');
+  const dataUrl = `data:${mimeType};base64,${base64}`;
+
+  const result = await env.AI.run('@cf/meta/llama-3.2-11b-vision-instruct', {
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'text', text: prompt },
+        { type: 'image_url', image_url: { url: dataUrl } }
+      ]
+    }],
+  });
+
+  let text = '';
+  if (typeof result === 'string') text = result;
+  else if (typeof result.response === 'string') text = result.response;
+  else if (typeof result.description === 'string') text = result.description;
+  else text = JSON.stringify(result);
+  return parseResult(text, description);
+}
+
+function parseResult(text, description) {
   const match = text.match(/\{[\s\S]*?\}/);
-  if (!match) return json({ error: 'parse failed', raw: text }, 500);
+  if (!match) return json({ error: 'parse failed', raw: text.slice(0, 300) }, 500);
 
   const parsed = JSON.parse(match[0]);
   parsed.cal = Math.round(parsed.cal || 0);
   parsed.carb = Math.round(parsed.carb || 0);
   parsed.protein = Math.round(parsed.protein || 0);
   parsed.fat = Math.round(parsed.fat || 0);
+  if (!parsed.description || !parsed.description.trim()) {
+    parsed.description = description || '食物';
+  }
   return json(parsed);
 }
 
