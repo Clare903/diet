@@ -1,7 +1,7 @@
-const PROMPT = `分析这张食物照片，估算整体营养成分。用户补充描述："{DESC}"
+const PROMPT = `Analyze this food photo and estimate the overall nutritional content. User note: "{DESC}"
 
-请直接返回一个 JSON 对象，不要任何其他文字：
-{"description":"食物简短描述","cal":整数千卡,"carb":整数克碳水,"protein":整数克蛋白质,"fat":整数克脂肪}`;
+Return ONLY a JSON object, no other text:
+{"description":"brief food description in Chinese","cal":integer_kcal,"carb":integer_grams_carbs,"protein":integer_grams_protein,"fat":integer_grams_fat}`;
 
 export default {
   async fetch(request, env) {
@@ -24,36 +24,29 @@ export default {
       const { image, description } = await request.json();
       if (!image) return json({ error: 'missing image' }, 400);
 
-      const base64 = image.split(',')[1];
-      const mime = image.match(/data:(.*?);/)?.[1] || 'image/jpeg';
-      const prompt = PROMPT.replace('{DESC}', description || '无');
+      let base64 = image.includes(',') ? image.split(',')[1] : image;
+      base64 = base64.replace(/\s/g, '');
+      const pad = base64.length % 4;
+      if (pad) base64 += '='.repeat(4 - pad);
+      const imageBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const prompt = PROMPT.replace('{DESC}', description || 'none');
 
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${env.GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { text: prompt },
-              { inline_data: { mime_type: mime, data: base64 } },
-            ]}],
-          }),
-        }
-      );
+      const result = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        image: [...imageBytes],
+      });
 
-      if (!geminiRes.ok) {
-        const err = await geminiRes.text();
-        return json({ error: 'Gemini API error', detail: err }, 502);
-      }
-
-      const geminiData = await geminiRes.json();
-      const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const text = result.response || result.description || JSON.stringify(result);
       const match = text.match(/\{[\s\S]*?\}/);
-      if (!match) return json({ error: 'parse failed', raw: text }, 500);
+      if (!match) return json({ error: 'parse failed', raw: text, result }, 500);
 
-      const result = JSON.parse(match[0]);
-      return json(result);
+      const parsed = JSON.parse(match[0]);
+      return json(parsed);
     } catch (e) {
       return json({ error: e.message }, 500);
     }
