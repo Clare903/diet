@@ -875,7 +875,10 @@ function loadState() {
     if (s) state = { ...state, ...JSON.parse(s) };
   } catch(e) {}
 }
-function saveState() { localStorage.setItem('fasting-tracker-v2', JSON.stringify(state)); }
+function saveState() {
+  const { _photos, _photoData, ...s } = state;
+  localStorage.setItem('fasting-tracker-v2', JSON.stringify(s));
+}
 function pad(n) { return String(n).padStart(2, '0'); }
 
 function calcMacroFromFoods(foods) {
@@ -1472,7 +1475,6 @@ function updateMacroSummary() {
 }
 
 function startFast() {
-  try {
   const meal = buildMealSummary();
   if (!meal) {
     alert(state._aiMacro ? '数据异常，请重新分析' : '请先记录食物或拍照识别');
@@ -1490,7 +1492,6 @@ function startFast() {
   requestNotifPermission();
   saveState();
   showFasting();
-  } catch(e) { alert('错误: ' + e.message); }
 }
 
 function hideAllStates() {
