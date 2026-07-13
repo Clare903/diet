@@ -1316,11 +1316,17 @@ function renderFoodDropdown(query) {
       </div>`;
     });
   });
-  if (!html) html = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:15px;">没找到</div>';
+  if (!html && q) {
+    html = `<div class="food-option food-ai-search" data-query="${q.replace(/"/g,'&quot;')}" style="padding:16px;text-align:center;color:var(--accent);cursor:pointer;">
+      <span style="font-size:15px;">🔍 AI 搜索「${q}」的营养成分</span>
+    </div>`;
+  } else if (!html) {
+    html = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:15px;">输入食物名称搜索</div>';
+  }
   dropdown.innerHTML = html;
   dropdown.classList.add('show');
 
-  dropdown.querySelectorAll('.food-option').forEach(opt => {
+  dropdown.querySelectorAll('.food-option:not(.food-ai-search)').forEach(opt => {
     opt.addEventListener('click', () => {
       const cat = FOOD_DB[opt.dataset.cat];
       const item = cat.items[opt.dataset.item];
@@ -1328,6 +1334,36 @@ function renderFoodDropdown(query) {
       renderAddedFoods();
       document.getElementById('food-search').value = '';
       dropdown.classList.remove('show');
+    });
+  });
+
+  dropdown.querySelectorAll('.food-ai-search').forEach(opt => {
+    opt.addEventListener('click', async () => {
+      const foodName = opt.dataset.query;
+      opt.innerHTML = '<span style="color:var(--text-muted);">搜索中...</span>';
+      try {
+        const res = await fetch(DEFAULT_AI_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ food: foodName })
+        });
+        const data = await res.json();
+        if (data.cal !== undefined) {
+          addedFoods.push({
+            name: data.name || foodName,
+            cal: data.cal, carb: data.carb, protein: data.protein, fat: data.fat,
+            grams: data.defaultG || 100, defaultG: data.defaultG || 100,
+            unit: data.unit || '份'
+          });
+          renderAddedFoods();
+          document.getElementById('food-search').value = '';
+          dropdown.classList.remove('show');
+        } else {
+          opt.innerHTML = '<span style="color:var(--red);">未找到，请换个名称试试</span>';
+        }
+      } catch(e) {
+        opt.innerHTML = '<span style="color:var(--red);">查询失败</span>';
+      }
     });
   });
 }
