@@ -1472,9 +1472,10 @@ function updateMacroSummary() {
 }
 
 function startFast() {
+  try {
   const meal = buildMealSummary();
   if (!meal) {
-    alert('调试: meal为空, inputMode=' + state.inputMode + ', aiMacro=' + JSON.stringify(state._aiMacro) + ', foods=' + addedFoods.length);
+    alert(state._aiMacro ? '数据异常，请重新分析' : '请先记录食物或拍照识别');
     return;
   }
   state.fasting = true;
@@ -1489,6 +1490,7 @@ function startFast() {
   requestNotifPermission();
   saveState();
   showFasting();
+  } catch(e) { alert('错误: ' + e.message); }
 }
 
 function hideAllStates() {
