@@ -1009,13 +1009,14 @@ function calcStages(macro, exercises, goalHours) {
 function round1(n) { return Math.round(n * 10) / 10; }
 
 function buildMealSummary() {
-  if (state.inputMode === 'detailed' && addedFoods.length > 0) {
+  if (state._aiMacro) {
+    const desc = state._aiDesc || '拍照识别';
+    return { desc, macro: state._aiMacro, foods: [] };
+  }
+  if (addedFoods.length > 0) {
     const names = addedFoods.map(f => f.name + ' ' + f.grams + 'g').join('、');
     const macro = calcMacroFromFoods(addedFoods);
     return { desc: names, macro, foods: addedFoods.map(f => ({...f})) };
-  } else if (state.inputMode === 'quick' && state._aiMacro) {
-    const desc = state._aiDesc || '拍照识别';
-    return { desc, macro: state._aiMacro, foods: [] };
   }
   return null;
 }
