@@ -1,10 +1,11 @@
-const IMAGE_PROMPT = `看这张食物照片，估算所有食物的总热量和营养成分。
+const IMAGE_PROMPT = `看这张食物照片，估算所有食物的总热量、营养成分和胃排空时间。
 用户补充说明："{DESC}"
-只返回JSON：{"description":"简短中文食物名","cal":千卡整数,"carb":碳水克数,"protein":蛋白质克数,"fat":脂肪克数}`;
+digestHours=胃排空时间(小时)：纯液体/黑咖啡约0.3-0.5h，水果约1h，普通正餐2-3h，高脂大餐4-5h。
+只返回JSON：{"description":"简短中文食物名","cal":千卡整数,"carb":碳水克数,"protein":蛋白质克数,"fat":脂肪克数,"digestHours":胃排空小时数}`;
 
 const IMAGE_PROMPT_EN = `Identify food in this photo. User note: "{DESC}".
-Return ONLY JSON: {"description":"2-6字中文食物名","cal":kcal_int,"carb":grams_int,"protein":grams_int,"fat":grams_int}
-Example: {"description":"冰拿铁","cal":150,"carb":15,"protein":5,"fat":7}
+digestHours=gastric emptying time: black coffee~0.3h, fruit~1h, normal meal~2.5h, high-fat large meal~4.5h.
+Return ONLY JSON: {"description":"2-6字中文食物名","cal":kcal_int,"carb":grams_int,"protein":grams_int,"fat":grams_int,"digestHours":number}
 NO other text.`;
 
 const FOOD_PROMPT = `Tell me the nutritional content of "{FOOD}" per 100 grams.

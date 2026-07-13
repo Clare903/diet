@@ -930,34 +930,46 @@ function calcExerciseGlycogenBurn(exercises) {
 
 function calcStages(macro, exercises, goalHours) {
   const carb = macro.carb || 100;
-  const protein = macro.protein || 20;
-  const fat = macro.fat || 20;
   const cal = macro.cal || 650;
   const startTime = state.startTime;
   const goal = goalHours || state.goalHours;
   const weight = getWeight() || 60;
 
-  const digestHours = Math.max(1.5, 1 + (cal / 500) * 1.5 + (fat / 30) * 0.8);
-  const bloodSugarHours = digestHours + Math.max(0.5, (carb / 60) * 1.2);
+  // 阶段1: 消化吸收 — AI返回的胃排空时间，或按食物量估算
+  const aiDigest = macro.digestHours;
+  const digestHours = aiDigest > 0 ? aiDigest : Math.max(0.3, cal / 300);
 
-  const glycogenKcal = Math.min(carb * 4, weight * 7.5);
-  const bmr = weight * 24;
-  const glycogenBurnHours = (glycogenKcal / bmr) * 24;
+  // 阶段2: 血糖稳定 — 餐后血糖恢复基线，高碳水餐约2-3h，低碳水约1h
+  const bloodSugarHours = digestHours + Math.max(0.3, Math.min(2, carb / 50));
+
+  // 阶段3: 糖原消耗开始 — 胰岛素降低后肝脏开始释放糖原
   const glycogenStartHours = bloodSugarHours + 0.5;
-  const glycogenEndHours = glycogenStartHours + Math.max(2, glycogenBurnHours);
 
-  const fatStartHours = glycogenEndHours + Math.max(1, (cal / 800) * 2);
-  const ketosisStartHours = fatStartHours + Math.max(2, 4 * (weight / 70));
-  const deepKetosisHours = ketosisStartHours + Math.max(4, 6 * (weight / 70));
+  // 阶段4: 糖原耗尽 — 肝糖原约100g(400kcal)，加上这餐补充的
+  // 基础代谢消耗速率：BMR(kcal/h) = weight * 1.0（静息时约60%来自脂肪，40%来自糖）
+  const glycogenFromMeal = Math.min(carb * 4, weight * 7);  // 肝糖原容量上限≈体重*7kcal
+  const totalGlycogen = 400 + glycogenFromMeal * 0.4;  // 基础肝糖原 + 这餐补充的40%
+  const glycogenBurnRate = weight * 1.0 * 0.4;  // 每小时消耗的糖原热量(kcal/h)
+  const glycogenEndHours = glycogenStartHours + totalGlycogen / glycogenBurnRate;
 
+  // 阶段5: 脂肪燃烧 — 糖原低于阈值后脂肪氧化显著增加
+  const fatStartHours = glycogenEndHours + 1;
+
+  // 阶段6: 初步酮症 — 通常断食12-36h后，体重轻的人更快
+  const ketosisStartHours = Math.max(fatStartHours + 2, 12 + (weight - 50) * 0.2);
+
+  // 阶段7: 深度酮症/自噬 — 通常24-72h
+  const deepKetosisHours = Math.max(ketosisStartHours + 6, 24 + (weight - 50) * 0.3);
+
+  const r = v => Math.round(v * 10) / 10;
   const baseHours = [
     0,
-    Math.round(digestHours * 10) / 10,
-    Math.round(bloodSugarHours * 10) / 10,
-    Math.round(glycogenEndHours * 10) / 10,
-    Math.round(fatStartHours * 10) / 10,
-    Math.round(ketosisStartHours * 10) / 10,
-    Math.round(deepKetosisHours * 10) / 10
+    r(digestHours),
+    r(bloodSugarHours),
+    r(glycogenEndHours),
+    r(fatStartHours),
+    r(ketosisStartHours),
+    r(deepKetosisHours)
   ];
 
   const stageSensitivity = [0.15, 0.3, 0.9, 1.0, 0.6, 0.3, 0.15];
@@ -1056,11 +1068,12 @@ async function analyzePhoto() {
     const valid = results.filter(d => d && d.cal !== undefined);
     if (!valid.length) throw new Error('parse');
 
-    const total = { cal: 0, carb: 0, protein: 0, fat: 0 };
+    const total = { cal: 0, carb: 0, protein: 0, fat: 0, digestHours: 0 };
     const descs = [];
     valid.forEach(d => {
       total.cal += d.cal; total.carb += d.carb;
       total.protein += d.protein; total.fat += d.fat;
+      if (d.digestHours > total.digestHours) total.digestHours = d.digestHours;
       if (d.description && !descs.includes(d.description)) descs.push(d.description);
     });
 
